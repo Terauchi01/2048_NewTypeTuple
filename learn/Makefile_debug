@@ -1,0 +1,33 @@
+.PHONY: clean debug
+
+TARGET = playgame_debug
+
+# デバッグ用のターゲット
+debug: $(TARGET)
+
+$(TARGET): playgame.o tdplayer2symmetric.o symmetric.o game2048.o
+	g++ -pthread -std=c++11 -g -gdwarf-2 -mcmodel=large -o $@ $+
+
+# デバッグ用のコンパイルルール
+%.o: %.cpp
+	g++ -pthread -std=c++11 -g -gdwarf-2 -O0 -I../head -c -W -Wall $< -o $@
+
+# 依存関係
+playgame.o: playgame.cpp
+tdplayer2symmetric.o: tdplayer2symmetric.cpp
+symmetric.o: symmetric.cpp
+game2048.o: game2048.cpp
+
+clean:
+	rm -f $(TARGET)
+	rm -f *.o
+	rm -f *~
+
+# 通常版（最適化あり）
+release: playgame_release
+
+playgame_release: playgame_r.o tdplayer2symmetric_r.o symmetric_r.o game2048_r.o
+	g++ -pthread -std=c++11 -mcmodel=large -o $@ $+
+
+%_r.o: %.cpp
+	g++ -pthread -std=c++11 -O3 -I../head -c -W -Wall $< -o $@
