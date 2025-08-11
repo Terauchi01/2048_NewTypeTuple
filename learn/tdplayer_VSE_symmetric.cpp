@@ -26,7 +26,7 @@ using namespace std;
 #define STAGE_THRESHOLD 14
 
 // デバッグフラグ (1にするとデバッグ情報を表示)
-#define DEBUG_FILTERED_BOARDS 1
+#define DEBUG_FILTERED_BOARDS 0
 
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];

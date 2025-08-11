@@ -12,7 +12,7 @@ using namespace std;
 
 int putTile2Random(const board_t &board, mt19937 &mt);
 
-#define NUM_GAMES 10
+#define NUM_GAMES 10000000
 #define LOGCOUNT 10000
 #define EVOUTPUT 2000000
 #define NUM_THREADS 1
