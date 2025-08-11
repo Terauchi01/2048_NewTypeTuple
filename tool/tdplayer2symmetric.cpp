@@ -40,7 +40,7 @@ void init_tuple(char** argv) {
     printf("]\n");
   }
 
-  // ‘ÎÌ«‚Ìl—¶ posSym ‚Ì€”õ
+  // å¯¾ç§°å½¢ã®ä½ç½® posSym ã®è¨ˆç®—
   for (int i = 0; i < NUM_TUPLE; i++) {
     for (int j = 0; j < 8; j++) {
       for (int k = 0; k < TUPLE_SIZE; k++) {
@@ -49,7 +49,7 @@ void init_tuple(char** argv) {
     }
   }
   
-  // •]‰¿’l‚Ì‰Šú‰»: Œ»ó‚Í 0 ‰Šú‰»
+  // è©•ä¾¡å€¤ã®åˆæœŸåŒ–: å…¨ã¦0ã§åˆæœŸåŒ–
   for (int i = 0; i < NUM_TUPLE; i++) {
     for (int j = 0; j < ARRAY_LENGTH; j++) {
       Evs[i][j] = EV_INIT_VALUE;
@@ -71,7 +71,7 @@ inline int min(int a, int b) {
 }
 
 inline int getIndexSym(const board_t &board, int tuple_id, int sym_id) {
-  int index = 0;                 // Œ»İ‚Ìƒ{[ƒh‚Ìƒ^ƒvƒ‹‚ÌƒCƒ“ƒfƒbƒNƒX
+  int index = 0;                 // ç¾åœ¨ã®ãƒœãƒ¼ãƒ‰ã®ã‚¿ãƒ—ãƒ«ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
   for (int j = 0; j < TUPLE_SIZE; j++) {
     const int tile = min(board[posSym[tuple_id][sym_id][j]], VARIATION_TILE);
     index = index * VARIATION_TILE + tile;
@@ -95,29 +95,29 @@ inline int getSmallerIndex(int index)
   return smaller;
 }
 
-// (‚·‚×‚Ä‚Ì‘Š—‚È”Õ–Ê‚ğŠÜ‚Ş)‚ ‚é”Õ–Ê‚Å‚Ìƒ^ƒvƒ‹‚Ìo—Í‚Ì‡Œv‚ğ•Ô‚·
+// ï¼ˆå…¨ã¦ã®å¯¾ç§°å½¢ã‚’è€ƒæ…®ï¼‰å¯¾ç§°å½¢ã§ã®ã‚¿ãƒ—ãƒ«ã®è©•ä¾¡å€¤åˆè¨ˆã‚’è¿”ã™
 inline int calcEv(const board_t &board)
 {
   int ev = 0;
-  for (int k = 0; k < NUM_TUPLE; k++) { // ƒ^ƒvƒ‹–ˆ‚Ìƒ‹[ƒv
-    for (int sym = 0; sym < 8; sym++) {
+  for (int k = 0; k < NUM_TUPLE; k++) { // ã‚¿ãƒ—ãƒ«ã”ã¨ã®ãƒ«ãƒ¼ãƒ—
+  for (int sym = 0; sym < 8; sym++) { // å¯¾ç§°å¤‰æ›ã”ã¨ã®ãƒ«ãƒ¼ãƒ—
       const int index = getIndexSym(board, k, sym);
       if (Evs[k][index] == EV_INIT_VALUE) {
-	// ‰Šú’l‚ğ‚æ‚è¬‚³‚Èƒ^ƒCƒ‹‚Ìê‡‚Ì•]‰¿’l‚ğ‚à‚Æ‚ÉXV‚·‚é
+    // è©•ä¾¡å€¤ãŒæœªå®šç¾©ã®ã‚¿ã‚¤ãƒ«ã®å ´åˆã¯è©•ä¾¡å€¤ã‚’æ›´æ–°
 	const int smaller_index = getSmallerIndex(index);
 	Evs[k][index] = Evs[k][smaller_index];
       }
-      ev += Evs[k][index]; // ÅI“I‚È•]‰¿’l‚É‘«‚·
+  ev += Evs[k][index]; // æœ€çµ‚çš„ãªè©•ä¾¡å€¤ã«åŠ ç®—
     }
   }
   return ev;
 }
 
-// ŠwK‚Ì‚½‚ß‚ÌŠÖ”ŒQ
+// ï¿½wï¿½Kï¿½Ì‚ï¿½ï¿½ß‚ÌŠÖï¿½ï¿½Q
 static void learningUpdate(const board_t& before, int delta)
 {
-  for (int k = 0; k < NUM_TUPLE; k++) { // ƒ^ƒvƒ‹–ˆ‚Ìƒ‹[ƒv
-    for (int sym = 0; sym < 8; sym++) { // ‰ñ“]‚â‘ÎÌ‚È”Õ–Ê–ˆ‚Ìƒ‹[ƒv
+  for (int k = 0; k < NUM_TUPLE; k++) { // ã‚¿ãƒ—ãƒ«ã”ã¨ã®ãƒ«ãƒ¼ãƒ—
+  for (int sym = 0; sym < 8; sym++) { // å¯¾ç§°å¤‰æ›ã”ã¨ã®ãƒ«ãƒ¼ãƒ—
       const int index = getIndexSym(before, k, sym);
       Evs[k][index] += delta;
     }
@@ -127,13 +127,13 @@ void learning(const board_t &before, const board_t &after, int rewards)
 {
   const int thisEvV = calcEv(before);
   const int nextEvV = calcEv(after);
-  const int delta = rewards + ((nextEvV - thisEvV) >> 10); // V(S)‚ÆV'(S)‚ÌŒë· ‚Ì 1/1024
+  const int delta = rewards + ((nextEvV - thisEvV) >> 10); // V(S)ã¨V'(S)ã®å·®åˆ†ï¼ˆ1/1024å˜ä½ï¼‰
   learningUpdate(before, delta);
 }  
 void learningLast(const board_t &before)
 {
   const int thisEvV = calcEv(before);
-  const int delta = 0 + ((0 - thisEvV) >> 10); // V(S)‚ÆV'(S)‚ÌŒë· ‚Ì 1/1024
+  const int delta = 0 + ((0 - thisEvV) >> 10); // V(S)ã¨V'(S)ã®å·®åˆ†ï¼ˆ1/1024å˜ä½ï¼‰
   learningUpdate(before, delta);
 }
 
@@ -147,15 +147,15 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
 				   const alldir_board &nextBoards,
 				   const alldir_int &scores)
 {
-  // •]‰¿’l‚ÌŒvZ
+  // è©•ä¾¡å€¤ã®è¨ˆç®—
   int nextEv[4];
-  for (int i = 0; i < 4; i++) {   // •ûŒü–ˆ
-    if (!canMoves[i]) continue; // “®‚©‚¹‚È‚¯‚ê‚Î–³‹
+  for (int i = 0; i < 4; i++) {   // æ–¹å‘ã”ã¨
+  if (!canMoves[i]) continue; // ç§»å‹•ã§ããªã„å ´åˆã¯ã‚¹ã‚­ãƒƒãƒ—
     nextEv[i] = calcEv(nextBoards[i]) + (scores[i] << 10);
   }
-  // Å‘å‚Ì•]‰¿’l‚ğ‘I‚Ô
+  // æœ€å¤§ã®è©•ä¾¡å€¤ã‚’é¸æŠ
   int maxi = -1; int maxv = 0;
-  for (int i = 0; i < 4; i++) { // •ûŒü–ˆ
+  for (int i = 0; i < 4; i++) { // æ–¹å‘ã”ã¨
     if (!canMoves[i]) continue;
     if (maxi == -1) {
       maxi = i;
@@ -171,14 +171,14 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
     printf("OUTOFRANGE: selected = %d\n", selected);
   }
   
-  // ‘I‚ñ‚¾è‚É‚æ‚Á‚ÄŠwK
+  // ä¸€æ‰‹ç›®ä»¥å¤–ã¯å­¦ç¿’
   if (firstTurn) {
     firstTurn = false;
   } else {
     learning(lastBoard, nextBoards[selected], scores[selected]);
   }
 
-  // lastBoard ‚ğXV
+  // lastBoardã‚’æ›´æ–°
   for (int i = 0; i < 16; i++) {
     lastBoard[i] = nextBoards[selected][i];
   }

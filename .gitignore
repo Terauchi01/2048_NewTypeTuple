@@ -1,0 +1,49 @@
+# C/C++ 中間生成ファイル
+*.o
+*.obj
+*.exe
+*.out
+*.so
+*.dll
+*.dylib
+*.a
+*.lib
+
+# 実行可能ファイル
+playgame
+playgame_debug
+playgame_release
+playgame-large2.exe
+a.out
+
+# デバッグファイル
+*.dSYM/
+*.pdb
+core
+
+# エディタ・IDE関連
+*~
+*.swp
+*.swo
+.vscode/
+.vs/
+*.user
+
+# OS固有
+.DS_Store
+Thumbs.db
+
+# ビルドディレクトリ
+build/
+debug/
+release/
+bin/
+
+# ログファイル
+*.log
+experiments.txt
+
+# その他の一時ファイル
+*.tmp
+*.temp
+*.bak

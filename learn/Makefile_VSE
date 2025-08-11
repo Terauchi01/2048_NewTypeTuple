@@ -1,0 +1,44 @@
+.phony: clean test help learn
+
+TARGET = game2048_VSE
+LEARN_TARGET = playgame_VSE
+
+$(TARGET): game2048_VSE.o tdplayer_VSE_symmetric.o symmetric.o
+	g++ -pthread -std=c++20 -mcmodel=large -o $@ $+
+
+$(LEARN_TARGET): playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
+	g++ -pthread -std=c++20 -mcmodel=large -o $@ $+
+
+%.o:%.cpp
+	g++ -pthread -std=c++20 -c -W -Wall -O3 -I../head $<
+# -mcmodel=large
+game2048_VSE.o: game2048_VSE.cpp ../head/game2048.h
+tdplayer_VSE_symmetric.o: tdplayer_VSE_symmetric.cpp ../head/tdplayer_VSE_symmetric.h ../head/symmetric.h ../head/game2048.h ../head/util.h ../head/selected_6_tuples.h
+symmetric.o: symmetric.cpp ../head/symmetric.h ../head/game2048.h
+playgame.o: playgame.cpp ../head/game2048.h ../head/symmetric.h ../head/tdplayer2symmetric.h ../head/util.h
+playgame_VSE.o: playgame_VSE.cpp ../head/game2048.h ../head/symmetric.h ../head/tdplayer_VSE_symmetric.h ../head/util.h
+game2048.o: game2048.cpp ../head/game2048.h
+
+# テスト実行（タプル番号0〜7を使用）
+test: $(TARGET)
+	./$(TARGET) test 0 1 2 3 4 5 6 7
+
+# 学習実行（タプル番号0〜7を使用、シード123で実行）
+learn: $(LEARN_TARGET)
+	./$(LEARN_TARGET) 123 0 1 2 3 4 5 6 7 8
+
+# クリーンアップ
+clean:
+	rm -f $(TARGET) $(LEARN_TARGET)
+	rm -f *.o
+	rm -f *~
+
+# ヘルプ
+help:
+	@echo "Available targets:"
+	@echo "  $(TARGET)      - Build the test executable"
+	@echo "  $(LEARN_TARGET) - Build the learning executable"
+	@echo "  test           - Build and run test with sample tuples"
+	@echo "  learn          - Build and run learning with sample tuples"
+	@echo "  clean          - Remove object files and executable"
+	@echo "  help      - Show this help message"
