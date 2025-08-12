@@ -47,3 +47,6 @@ experiments.txt
 *.tmp
 *.temp
 *.bak
+playgame_VSE
+playgame.cpp
+Makefile_VSE

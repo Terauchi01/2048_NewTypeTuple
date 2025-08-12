@@ -1,4 +1,6 @@
 #define AVAIL_TUPLE 5
+#define NUM_TUPLE 5
+#define TUPLE_SIZE 8
 // {0,1,2,3,
 //  4,5,6,7,
 //  8,9,10,11,

@@ -6,7 +6,7 @@ typedef board_t alldir_board[4];
 typedef int alldir_int[4];
 
 void init_tuple(char** argv);
-void output_ev(int suffix);
+void output_ev(int seed, int suffix);
 
 class TDPlayer {
 public:

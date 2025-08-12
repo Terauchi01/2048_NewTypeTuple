@@ -13,8 +13,8 @@ using namespace std;
 // #include "util.h"
 
 #define VARIATION_TILE 7
-#define TUPLE_SIZE 6
-#define NUM_TUPLE 8
+// #define TUPLE_SIZE 6
+// #define NUM_TUPLE 9
 #define NUM_STAGES 2
 #define NUM_SPLIT 4
 // #define NUM_TUPLE 10
@@ -28,18 +28,37 @@ using namespace std;
 // デバッグフラグ (1にするとデバッグ情報を表示)
 #define DEBUG_FILTERED_BOARDS 0
 
+#ifndef TUPLE_FILE_TYPE
+#define TUPLE_FILE_TYPE 6
+#endif
+
+#if TUPLE_FILE_TYPE == 6
+#include "../head/selected_6_tuples.h"
+#elif TUPLE_FILE_TYPE == 7
+#include "../head/selected_7_tuples.h"
+#elif TUPLE_FILE_TYPE == 8
+#include "../head/selected_8_tuples.h"
+#elif TUPLE_FILE_TYPE == 9
+#include "../head/selected_9_tuples.h"
+#else
+#error "Invalid TUPLE_FILE_TYPE specified"
+#endif
+
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
 
 //#include "selected_7_tuples.h"
-#include "../head/selected_6_tuples.h"
 
 int posSym[NUM_TUPLE][8][TUPLE_SIZE];
 
-void output_ev(int suffix) {
+void output_ev(int seed,int suffix) {
   char filename[1024];
   FILE *fp;
-  sprintf(filename, "tuples%d-%d-%d.dat", TUPLE_SIZE, NUM_TUPLE, suffix);
+  
+  // datディレクトリを作成（既に存在する場合は何もしない）
+  system("mkdir -p dat");
+  
+  sprintf(filename, "dat/tuples%d-NUM_TUPLE%d-seed%d-VSE-count%d.dat", TUPLE_SIZE, NUM_TUPLE, seed,suffix);
   fp = fopen(filename, "wb");
   fwrite(Evs, sizeof(int)*ARRAY_LENGTH, NUM_STAGES*NUM_SPLIT*NUM_TUPLE, fp);
   fclose(fp);
@@ -217,7 +236,8 @@ void debugBoardInfo(const board_t &board) {
 void init_tuple(char** argv) {
   int order[AVAIL_TUPLE];
   for (int i = 0; i < NUM_TUPLE; i++) {
-    order[i] = atoi(argv[2+i]);
+    // order[i] = atoi(argv[2+i]);
+    order[i] = i;
   }
   for (int i = 0; i < NUM_TUPLE; i++) {
     for (int k = 0; k < TUPLE_SIZE; k++) {

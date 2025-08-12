@@ -11,12 +11,13 @@ using namespace std;
 #include "../head/util.h"
 
 int putTile2Random(const board_t &board, mt19937 &mt);
-
 #define NUM_GAMES 10000000
+// #define NUM_GAMES 10
 #define LOGCOUNT 10000
 #define EVOUTPUT 2000000
 #define NUM_THREADS 1
 int loopCount = 0;
+int seed = 0;
 
 mutex mtx_for_loopcount;
 mutex mtx_for_logger;
@@ -42,7 +43,7 @@ inline void logger(int score)
       minS = 99999999;
     }
     if (logcount % EVOUTPUT == 0) {
-      output_ev(logcount / EVOUTPUT);
+      output_ev(seed, logcount / EVOUTPUT);
     }
   }
   mtx_for_logger.unlock();
@@ -105,18 +106,18 @@ void run_tdlearning(int seed)
 }
 
 void usage() {
-  fprintf(stderr, "playgame_VSE seed tuple1 tuple2 ... tuple8\n");
+  fprintf(stderr, "playgame_VSE seed\n");
 }
 
 int main(int argc, char** argv)
 {
-  if (argc < 1+1+8) {
+  if (argc != 2) {  // プログラム名 + seed の2つの引数のみ
     usage(); exit(1);
   }
-  int seed = atoi(argv[1]);
+  seed = atoi(argv[1]);
     
   init_movetable();
-  init_tuple(argv + 1);  // seedの次から開始
+  init_tuple(NULL);  // 全てのタプルを使用するため引数不要
   printf("initialization finished\n");
 
   std::vector<std::thread> ths;
