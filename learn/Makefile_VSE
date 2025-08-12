@@ -54,7 +54,7 @@ run-6:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 $(LEARN_TARGET)
 	@echo "Starting 6-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4 5 6 7 8 9; do \
+	@for seed in {0..4}; do \
 		echo "Starting run with 6-tuple seed $$seed (output: logs/6tuple_seed$$seed.log)"; \
 		nohup ./$(LEARN_TARGET) $$seed > logs/6tuple_seed$$seed.log 2>&1 & \
 	done
@@ -65,7 +65,7 @@ run-7:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 $(LEARN_TARGET)
 	@echo "Starting 7-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4 5 6 7 8 9; do \
+	@for seed in {0..4}; do \
 		echo "Starting run with 7-tuple seed $$seed (output: logs/7tuple_seed$$seed.log)"; \
 		nohup ./$(LEARN_TARGET) $$seed > logs/7tuple_seed$$seed.log 2>&1 & \
 	done
@@ -76,7 +76,7 @@ run-8:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 $(LEARN_TARGET)
 	@echo "Starting 8-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4 5 6 7 8 9; do \
+	@for seed in {0..4}; do \
 		echo "Starting run with 8-tuple seed $$seed (output: logs/8tuple_seed$$seed.log)"; \
 		nohup ./$(LEARN_TARGET) $$seed > logs/8tuple_seed$$seed.log 2>&1 & \
 	done
@@ -87,7 +87,7 @@ run-9:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 $(LEARN_TARGET)
 	@echo "Starting 9-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4 5 6 7 8 9; do \
+	@for seed in {0..4}; do \
 		echo "Starting run with 9-tuple seed $$seed (output: logs/9tuple_seed$$seed.log)"; \
 		nohup ./$(LEARN_TARGET) $$seed > logs/9tuple_seed$$seed.log 2>&1 & \
 	done
