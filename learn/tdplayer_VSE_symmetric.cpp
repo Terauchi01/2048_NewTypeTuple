@@ -20,7 +20,7 @@ using namespace std;
 // #define NUM_TUPLE 10
 #define ARRAY_LENGTH (VARIATION_TILE * VARIATION_TILE * VARIATION_TILE * VARIATION_TILE * VARIATION_TILE * VARIATION_TILE)
 
-#define EV_INIT_VALUE 0
+#define EV_INIT_VALUE 320000
 
 // ステージ判定用閾値（この値以上の数字があるかでステージを決定）
 #define STAGE_THRESHOLD 14
