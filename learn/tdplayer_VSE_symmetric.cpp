@@ -233,7 +233,7 @@ void debugBoardInfo(const board_t &board) {
   debugFilteredBoards(board);
 }
 
-void init_tuple(char** argv) {
+void init_tuple() {
   int order[AVAIL_TUPLE];
   for (int i = 0; i < NUM_TUPLE; i++) {
     // order[i] = atoi(argv[2+i]);

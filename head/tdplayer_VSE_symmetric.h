@@ -5,7 +5,7 @@ typedef bool alldir_bool[4];
 typedef board_t alldir_board[4];
 typedef int alldir_int[4];
 
-void init_tuple(char** argv);
+void init_tuple();
 void output_ev(int seed, int suffix);
 
 class TDPlayer {

@@ -7,7 +7,7 @@ LEARN_TARGET = playgame_VSE
 TUPLE_TYPE = 6
 
 # コンパイルフラグ
-CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head -DTUPLE_FILE_TYPE=$(TUPLE_TYPE)
+CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) -mcmodel=large
 LFLAGS = -pthread -std=c++20 -mcmodel=large
 
 $(TARGET): game2048_VSE.o tdplayer_VSE_symmetric.o symmetric.o
@@ -37,59 +37,75 @@ learn: $(LEARN_TARGET)
 
 # 異なるタプルファイルでビルド
 build-6:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 clean
+	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=6
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=6
+	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=6
+	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=6
+	g++ $(LFLAGS) -o playgame_VSE_6 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
 
 build-7:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 clean
+	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=7
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=7
+	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=7
+	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=7
+	g++ $(LFLAGS) -o playgame_VSE_7 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
 
 build-8:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 clean
+	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=8
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=8
+	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=8
+	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=8
+	g++ $(LFLAGS) -o playgame_VSE_8 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
 
 build-9:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 clean
+	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=9
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=9
+	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=9
+	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=9
+	g++ $(LFLAGS) -o playgame_VSE_9 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
 
 # 異なるタプルファイルでビルドして実行（seed 0~9）
 run-6:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE build-6
 	@echo "Starting 6-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in {0..4}; do \
+	@for seed in 0 1 2 3 4; do \
 		echo "Starting run with 6-tuple seed $$seed (output: logs/6tuple_seed$$seed.log)"; \
-		nohup ./$(LEARN_TARGET) $$seed > logs/6tuple_seed$$seed.log 2>&1 & \
+		nohup ./playgame_VSE_6 $$seed > logs/6tuple_seed$$seed.log 2>&1 & \
 	done
 	@echo "All 6-tuple runs started. Check logs/ directory for output files."
 
 run-7:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE build-7
 	@echo "Starting 7-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in {0..4}; do \
+	@for seed in 0 1 2 3 4; do \
 		echo "Starting run with 7-tuple seed $$seed (output: logs/7tuple_seed$$seed.log)"; \
-		nohup ./$(LEARN_TARGET) $$seed > logs/7tuple_seed$$seed.log 2>&1 & \
+		nohup ./playgame_VSE_7 $$seed > logs/7tuple_seed$$seed.log 2>&1 & \
 	done
 	@echo "All 7-tuple runs started. Check logs/ directory for output files."
 
 run-8:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE build-8
 	@echo "Starting 8-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in {0..4}; do \
+	@for seed in 0 1 2 3 4; do \
 		echo "Starting run with 8-tuple seed $$seed (output: logs/8tuple_seed$$seed.log)"; \
-		nohup ./$(LEARN_TARGET) $$seed > logs/8tuple_seed$$seed.log 2>&1 & \
+		nohup ./playgame_VSE_8 $$seed > logs/8tuple_seed$$seed.log 2>&1 & \
 	done
 	@echo "All 8-tuple runs started. Check logs/ directory for output files."
 
 run-9:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 $(LEARN_TARGET)
+	$(MAKE) -f Makefile_VSE build-9
 	@echo "Starting 9-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in {0..4}; do \
+	@for seed in 0 1 2 3 4; do \
 		echo "Starting run with 9-tuple seed $$seed (output: logs/9tuple_seed$$seed.log)"; \
-		nohup ./$(LEARN_TARGET) $$seed > logs/9tuple_seed$$seed.log 2>&1 & \
+		nohup ./playgame_VSE_9 $$seed > logs/9tuple_seed$$seed.log 2>&1 & \
 	done
 	@echo "All 9-tuple runs started. Check logs/ directory for output files."
 
@@ -115,28 +131,25 @@ stop-runs:
 
 # 学習実行（タプルタイプ指定可能）
 learn-6:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 $(LEARN_TARGET)
-	./$(LEARN_TARGET) 123
+	$(MAKE) -f Makefile_VSE build-6
+	./playgame_VSE_6 123
 
 learn-7:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 $(LEARN_TARGET)
-	./$(LEARN_TARGET) 123
+	$(MAKE) -f Makefile_VSE build-7
+	./playgame_VSE_7 123
 
 learn-8:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 $(LEARN_TARGET)
-	./$(LEARN_TARGET) 123
+	$(MAKE) -f Makefile_VSE build-8
+	./playgame_VSE_8 123
 
 learn-9:
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 clean
-	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 $(LEARN_TARGET)
-	./$(LEARN_TARGET) 123
+	$(MAKE) -f Makefile_VSE build-9
+	./playgame_VSE_9 123
 
 # クリーンアップ
 clean:
 	rm -f $(TARGET) $(LEARN_TARGET)
+	rm -f playgame_VSE_6 playgame_VSE_7 playgame_VSE_8 playgame_VSE_9
 	rm -f *.o
 	rm -f *~
 
@@ -160,7 +173,7 @@ help:
 	@echo "  make -f Makefile_VSE learn-6   # Learn with 6-tuples"
 	@echo "  make -f Makefile_VSE learn-8   # Learn with 8-tuples"
 	@echo "  make -f Makefile_VSE build-7   # Build with 7-tuples"
-	@echo "  make -f Makefile_VSE run-6     # Build and run with 6-tuples (seeds 0-9, background)"
-	@echo "  make -f Makefile_VSE run-8     # Build and run with 8-tuples (seeds 0-9, background)"
+	@echo "  make -f Makefile_VSE run-6     # Build and run with 6-tuples (seeds 0-4, background)"
+	@echo "  make -f Makefile_VSE run-8     # Build and run with 8-tuples (seeds 0-4, background)"
 	@echo "  make -f Makefile_VSE check-runs # Check running status"
 	@echo "  make -f Makefile_VSE stop-runs  # Stop all background runs"

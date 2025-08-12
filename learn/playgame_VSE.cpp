@@ -117,7 +117,7 @@ int main(int argc, char** argv)
   seed = atoi(argv[1]);
     
   init_movetable();
-  init_tuple(NULL);  // 全てのタプルを使用するため引数不要
+  init_tuple();  // 全てのタプルを使用するため引数不要
   printf("initialization finished\n");
 
   std::vector<std::thread> ths;
