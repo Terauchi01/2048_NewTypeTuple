@@ -73,7 +73,7 @@ run-6:
 	$(MAKE) -f Makefile_VSE build-6
 	@echo "Starting 6-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4; do \
+	@for seed in 0; do \
 		echo "Starting run with 6-tuple seed $$seed (output: logs/6tuple_seed$$seed.log)"; \
 		nohup ./playgame_VSE_6 $$seed > logs/6tuple_seed$$seed.log 2>&1 & \
 	done
@@ -83,7 +83,7 @@ run-7:
 	$(MAKE) -f Makefile_VSE build-7
 	@echo "Starting 7-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4; do \
+	@for seed in 0; do \
 		echo "Starting run with 7-tuple seed $$seed (output: logs/7tuple_seed$$seed.log)"; \
 		nohup ./playgame_VSE_7 $$seed > logs/7tuple_seed$$seed.log 2>&1 & \
 	done
@@ -93,7 +93,7 @@ run-8:
 	$(MAKE) -f Makefile_VSE build-8
 	@echo "Starting 8-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4; do \
+	@for seed in 0; do \
 		echo "Starting run with 8-tuple seed $$seed (output: logs/8tuple_seed$$seed.log)"; \
 		nohup ./playgame_VSE_8 $$seed > logs/8tuple_seed$$seed.log 2>&1 & \
 	done
@@ -103,7 +103,7 @@ run-9:
 	$(MAKE) -f Makefile_VSE build-9
 	@echo "Starting 9-tuple runs in background..."
 	@mkdir -p logs
-	@for seed in 0 1 2 3 4; do \
+	@for seed in 0; do \
 		echo "Starting run with 9-tuple seed $$seed (output: logs/9tuple_seed$$seed.log)"; \
 		nohup ./playgame_VSE_9 $$seed > logs/9tuple_seed$$seed.log 2>&1 & \
 	done

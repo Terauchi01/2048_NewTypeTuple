@@ -23,9 +23,9 @@ mutex mtx_for_logger;
 
 // logger
 int logcount = 0;
-long long sumS = 0; // ‹æŠÔ‡Œv
-int maxS = 0; // ‹æŠÔÅ‘å
-int minS = 99999999; // ‹æŠÔÅ¬
+long long sumS = 0; // ï¿½ï¿½Ôï¿½ï¿½v
+int maxS = 0; // ï¿½ï¿½ÔÅ‘ï¿½
+int minS = 99999999; // ï¿½ï¿½ÔÅï¿½
 inline void logger(int score)
 {
   mtx_for_logger.lock();
@@ -51,7 +51,7 @@ inline void logger(int score)
 
 void run_tdlearning(int seed)
 {
-  // —”‚Ì€”õ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½
   mt19937 mt(seed);
   
   TDPlayer player;
@@ -70,12 +70,12 @@ void run_tdlearning(int seed)
     int turn = 1;
     
     player.gameStart();
-    while (true) { // turn ‚²‚Æ‚Ìƒ‹[ƒv
-      // CPU‘¤: ƒ‰ƒ“ƒ_ƒ€
+    while (true) { // turn ï¿½ï¿½ï¿½Æ‚Ìƒï¿½ï¿½[ï¿½v
+      // CPUï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½ï¿½
       int play = putTile2Random(board, mt);
-      board[play] = (rand(mt, 10) == 0) ? 2 : 1; // 4 ‚Ü‚½‚Í 2 ‚ğ’u‚­
+      board[play] = (rand(mt, 10) == 0) ? 2 : 1; // 4 ï¿½Ü‚ï¿½ï¿½ï¿½ 2 ï¿½ï¿½uï¿½ï¿½
       
-      // €”õ
+      // ï¿½ï¿½ï¿½ï¿½
       alldir_bool canMoves;
       alldir_board nextBoards;
       alldir_int scores;
@@ -84,12 +84,12 @@ void run_tdlearning(int seed)
 	canMoves[d] = (scores[d] > -1);
       }
 
-      // ˆÈ‰º, “®‚¯‚È‚­‚È‚Á‚½‚çwhile•¶‚ğ”²‚¯‚ÄŸ‚ÌƒQ[ƒ€‚Ö
+      // ï¿½È‰ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½ï¿½È‚ï¿½ï¿½ï¿½ï¿½ï¿½whileï¿½ï¿½ï¿½ğ”²‚ï¿½ï¿½Äï¿½ï¿½ÌƒQï¿½[ï¿½ï¿½ï¿½ï¿½
       if (!canMoves[0] && !canMoves[1] && !canMoves[2] && !canMoves[3]) {
 	break;
       }
 
-      // ƒvƒŒƒCƒ„‚ªè‚ğ‘I‚Ô
+      // ï¿½vï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Iï¿½ï¿½
       int dir = player.selectHand(board, canMoves, nextBoards, scores);
       for (int i = 0; i < 16; i++) {
 	board[i] = nextBoards[dir][i];

@@ -14,8 +14,8 @@ int putTile2Random(const board_t &board, mt19937 &mt);
 #define NUM_GAMES 100000000
 // #define NUM_GAMES 10
 #define LOGCOUNT 10000
-#define EVOUTPUT 1000000
-#define NUM_THREADS 1
+#define EVOUTPUT 2000000
+#define NUM_THREADS 12
 int loopCount = 0;
 int seed = 0;
 
