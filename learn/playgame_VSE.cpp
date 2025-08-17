@@ -7,7 +7,7 @@
 using namespace std;
 #include "../head/game2048.h"
 #include "../head/symmetric.h"
-#include "../head/tdplayer_VSE_symmetric.h"
+#include "../head/tdplayer_VSE_symmetric2.h"
 #include "../head/util.h"
 
 int putTile2Random(const board_t &board, mt19937 &mt);

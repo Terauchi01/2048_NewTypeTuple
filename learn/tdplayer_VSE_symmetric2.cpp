@@ -3,7 +3,7 @@
 using namespace std;
 #include "../head/game2048.h"
 #include "../head/symmetric.h"
-#include "../head/tdplayer_VSE_symmetric.h"
+#include "../head/tdplayer_VSE_symmetric2.h"
 #include "../head/util.h"
 #include <random>
 using namespace std;
@@ -33,6 +33,28 @@ using namespace std;
 #endif
 
 #define MAX_TILE_VALUE 16
+
+#if TUPLE_FILE_TYPE == 6
+  #include "../head/selected_6_tuples_sym.h"
+  // #define DEFAULT_UNROLL_COUNT 72
+#elif TUPLE_FILE_TYPE == 7
+  #include "../head/selected_7_tuples_sym.h"
+  // #define DEFAULT_UNROLL_COUNT 64
+#elif TUPLE_FILE_TYPE == 8
+  #include "../head/selected_8_tuples_sym.h"
+  // #define DEFAULT_UNROLL_COUNT 40
+#elif TUPLE_FILE_TYPE == 9
+  #include "../head/selected_9_tuples_sym.h"
+  // #define DEFAULT_UNROLL_COUNT 56
+#else
+  #error "Invalid TUPLE_FILE_TYPE specified"
+#endif
+
+// --- _Pragma ラッパ ---
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+#define GCC_UNROLL(n)   _Pragma(STR(GCC unroll n))
+#define CLANG_UNROLL(n) _Pragma(STR(clang loop unroll_count(n)))
 
 // filter mapping: [filter][tile_value] -> mapped_value
 static int filter_mapping[NUM_SPLIT][MAX_TILE_VALUE+1];
@@ -65,30 +87,17 @@ static inline void apply_filters_from_mapping(const board_t &board, board_t filt
   for (int f = 0; f < NUM_SPLIT; ++f) {
     for (int i = 0; i < 16; ++i) {
       int v = board[i];
-      if (v < 0) v = 0; if (v > MAX_TILE_VALUE) v = MAX_TILE_VALUE;
+      if (v < 0) v = 0; 
+      if (v > MAX_TILE_VALUE) v = MAX_TILE_VALUE;
       filtered_boards[f][i] = filter_mapping[f][v];
     }
   }
 }
 
-#if TUPLE_FILE_TYPE == 6
-#include "../head/selected_6_tuples.h"
-#elif TUPLE_FILE_TYPE == 7
-#include "../head/selected_7_tuples.h"
-#elif TUPLE_FILE_TYPE == 8
-#include "../head/selected_8_tuples.h"
-#elif TUPLE_FILE_TYPE == 9
-#include "../head/selected_9_tuples.h"
-#else
-#error "Invalid TUPLE_FILE_TYPE specified"
-#endif
-
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
 
 //#include "selected_7_tuples.h"
-
-int posSym[NUM_TUPLE][8][TUPLE_SIZE];
 
 void output_ev(int seed,int suffix) {
   char filename[1024];
@@ -197,7 +206,7 @@ void debugFilteredBoards(const board_t &board) {
   }
   
   // 各フィルター後のボード表示
-  const char* filter_names[NUM_SPLIT] = {"Upper", "Middle", "Lower", "Fourth"};
+  const char* filter_names[NUM_SPLIT] = {"First", "Second", "Third", "Fourth"};
   for (int f = 0; f < NUM_SPLIT; f++) {
     printf("\nFiltered board (%s):\n", filter_names[f]);
     for (int i = 0; i < 16; i++) {
@@ -211,16 +220,14 @@ void debugFilteredBoards(const board_t &board) {
   int stage = get_stage(board);
   
   for (int i = 0; i < NUM_TUPLE; i++) {
-    for (int j = 0; j < 8; j++) {
       for (int f = 0; f < NUM_SPLIT; f++) {
         int index = 0;
         for (int k = 0; k < TUPLE_SIZE; k++) {
-          const int tile = min(filtered_boards[f][posSym[i][j][k]], VARIATION_TILE);
+          const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
         ev_filters[f] += Evs[stage][f][i][index];
       }
-    }
   }
   
   printf("\nEvaluation values:\n");
@@ -243,16 +250,16 @@ int calcEvFiltered(const board_t &board) {
   apply_filters_from_mapping(board, filtered_boards);
   
   for (int i = 0; i < NUM_TUPLE; i++) {
-    for (int j = 0; j < 8; j++) {
+    // for (int j = 0; j < 8; j++) {
       for (int f = 0; f < NUM_SPLIT; f++) {
         int index = 0;
         for (int k = 0; k < TUPLE_SIZE; k++) {
-          const int tile = min(filtered_boards[f][posSym[i][j][k]], VARIATION_TILE);
+          const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        ev += Evs[stage][f][i][index];
+        ev += Evs[stage][f][i/8][index];
       }
-    }
+    // }
   }
   return ev;
 }
@@ -262,40 +269,13 @@ void debugBoardInfo(const board_t &board) {
 }
 
 void init_tuple() {
-  int order[AVAIL_TUPLE];
-  for (int i = 0; i < NUM_TUPLE; i++) {
-    // order[i] = atoi(argv[2+i]);
-    order[i] = i;
-  }
-  for (int i = 0; i < NUM_TUPLE; i++) {
-    for (int k = 0; k < TUPLE_SIZE; k++) {
-      pos[i][k] = tuples[order[i]][k];
-    }
-  }
-  
+  build_filter_mapping();
   printf("TDPlayer 2 Symmetric ver.\n");
   for (int i = 0; i < NUM_TUPLE; i++) {
-    printf(" %2d-th-tuples: %03d [%2d", (i+1), order[i], pos[i][0]);
-    for (int j = 1; j < TUPLE_SIZE; j++) printf(",%2d", pos[i][j]);
+    printf(" %2d-th-tuples: [%2d", (i+1),tuples[i][0]);
+    for (int j = 1; j < TUPLE_SIZE; j++) printf(",%2d", tuples[i][j]);
     printf("]\n");
   }
-
-  // 対称形の位置 posSym の計算
-  for (int i = 0; i < NUM_TUPLE; i++) {
-    // 出力ヘッダ
-    // printf("// tuple %d\n", i);
-    for (int j = 0; j < 8; j++) {
-      int row[TUPLE_SIZE];
-      for (int k = 0; k < TUPLE_SIZE; k++) {
-        posSym[i][j][k] = symmetricPos[j][pos[i][k]];
-        row[k] = posSym[i][j][k];
-      }
-      // 例: { 0, 1, 3, 4},
-      // printf("  {%d, %d, %d, %d, %d, %d, %d, %d, %d},\n", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7],row[8]);//, row[9], row[10], row[11], row[12], row[13], row[14], row[15]
-    }
-    // printf("\n");
-  }
-  
   // 評価値の初期化: 全て0で初期化
   for (int s = 0; s < NUM_STAGES; s++) {
     for (int sp = 0; sp < NUM_SPLIT; sp++) {
@@ -312,10 +292,22 @@ inline int min(int a, int b) {
   return (a < b) ? a : b;
 }
 
-inline int getIndexSym(const board_t &board, int tuple_id, int sym_id) {
+// inline int getIndexSym(const board_t &board, int tuple_id, int sym_id) {
+//   int index = 0;                 // 現在のボードのタプルのインデックス
+//   for (int j = 0; j < TUPLE_SIZE; j++) {
+//     const int tile = min(board[posSym[tuple_id][sym_id][j]], VARIATION_TILE);
+//     index = index * VARIATION_TILE + tile;
+//   }
+//   if (index < 0 || index >= ARRAY_LENGTH) {
+//     printf("Error index: %d\n", index);
+//   }
+//   return index;
+// }
+
+inline int getIndex(const board_t &board, int tuple_id) {
   int index = 0;                 // 現在のボードのタプルのインデックス
   for (int j = 0; j < TUPLE_SIZE; j++) {
-    const int tile = min(board[posSym[tuple_id][sym_id][j]], VARIATION_TILE);
+    const int tile = min(board[posSym[tuple_id][j]], VARIATION_TILE);
     index = index * VARIATION_TILE + tile;
   }
   if (index < 0 || index >= ARRAY_LENGTH) {
@@ -342,16 +334,22 @@ inline int calcEv(const board_t &board)
 {
   int ev = 0;
   int stage = get_stage(board);
-  for (int k = 0; k < NUM_TUPLE; k++) { // タプルごとのループ
-    for (int sym = 0; sym < 8; sym++) { // 対称変換ごとのループ
-      const int index = getIndexSym(board, k, sym);
-      if (Evs[stage][0][k][index] == EV_INIT_VALUE) {
+  /* request loop unrolling: use UNROLL_COUNT from Makefile (passed via -DUNROLL_COUNT) */
+#if defined(__clang__)
+  #define UNROLL_PRAGMA CLANG_UNROLL(UNROLL_COUNT)
+#else
+  #define UNROLL_PRAGMA GCC_UNROLL(UNROLL_COUNT)
+#endif
+  for (int k = 0; k < AVAIL_TUPLE*SYMMETRIC_TUPLE_NUM; k++) { // タプルごとのループ
+    // for (int sym = 0; sym < 8; sym++) { // 対称変換ごとのループ
+      const int index = getIndex(board, k);
+      if (Evs[stage][0][k/8][index] == EV_INIT_VALUE) {
         // 評価値が未定義のタイルの場合は評価値を更新
         const int smaller_index = getSmallerIndex(index);
-        Evs[stage][0][k][index] = Evs[stage][0][k][smaller_index];
+        Evs[stage][0][k/8][index] = Evs[stage][0][k/8][smaller_index];
       }
-      ev += Evs[stage][0][k][index]; // 最終的な評価値に加算
-    }
+      ev += Evs[stage][0][k/8][index]; // 最終的な評価値に加算
+    // }
   }
   return ev;
 }
@@ -368,17 +366,23 @@ static void learningUpdate(const board_t& before, int delta)
   // 各フィルターを適用 (mapping 方式)
   apply_filters_from_mapping(before, filtered_boards);
   
-  for (int k = 0; k < NUM_TUPLE; k++) { // タプルごとのループ
-    for (int sym = 0; sym < 8; sym++) { // 対称変換ごとのループ
+  /* request loop unrolling: use UNROLL_COUNT from Makefile (passed via -DUNROLL_COUNT) */
+#if defined(__clang__)
+  #define UNROLL_PRAGMA CLANG_UNROLL(UNROLL_COUNT)
+#else
+  #define UNROLL_PRAGMA GCC_UNROLL(UNROLL_COUNT)
+#endif
+  for (int k = 0; k < AVAIL_TUPLE*SYMMETRIC_TUPLE_NUM; k++) { // タプルごとのループ
+    // for (int sym = 0; sym < 8; sym++) { // 対称変換ごとのループ
       for (int f = 0; f < NUM_SPLIT; f++) { // フィルターごとのループ
         int index = 0;
         for (int j = 0; j < TUPLE_SIZE; j++) {
-          const int tile = min(filtered_boards[f][posSym[k][sym][j]], VARIATION_TILE);
+          const int tile = min(filtered_boards[f][posSym[k][j]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        Evs[stage][f][k][index] += stage_delta;
+        Evs[stage][f][k/8][index] += stage_delta;
       }
-    }
+    // }
   }
 }  
 void learning(const board_t &before, const board_t &after, int rewards)

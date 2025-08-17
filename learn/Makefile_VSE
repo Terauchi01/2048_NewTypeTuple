@@ -7,7 +7,7 @@ LEARN_TARGET = playgame_VSE
 TUPLE_TYPE = 6
 
 # コンパイルフラグ
-CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) -mcmodel=large
+CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head -DTUPLE_FILE_TYPE=$(TUPLE_TYPE)
 LFLAGS = -pthread -std=c++20 -mcmodel=large
 
 $(TARGET): game2048_VSE.o tdplayer_VSE_symmetric.o symmetric.o
@@ -21,10 +21,10 @@ $(LEARN_TARGET): playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
 
 # 依存関係
 game2048_VSE.o: game2048_VSE.cpp ../head/game2048.h
-tdplayer_VSE_symmetric.o: tdplayer_VSE_symmetric.cpp ../head/tdplayer_VSE_symmetric.h ../head/symmetric.h ../head/game2048.h ../head/util.h ../head/selected_6_tuples.h ../head/selected_7_tuples.h ../head/selected_8_tuples.h ../head/selected_9_tuples.h
+tdplayer_VSE_symmetric.o: tdplayer_VSE_symmetric2.cpp ../head/tdplayer_VSE_symmetric2.h ../head/symmetric.h ../head/game2048.h ../head/util.h ../head/selected_6_tuples.h ../head/selected_7_tuples.h ../head/selected_8_tuples.h ../head/selected_9_tuples.h
 symmetric.o: symmetric.cpp ../head/symmetric.h ../head/game2048.h
 playgame.o: playgame.cpp ../head/game2048.h ../head/symmetric.h ../head/tdplayer2symmetric.h ../head/util.h
-playgame_VSE.o: playgame_VSE.cpp ../head/game2048.h ../head/symmetric.h ../head/tdplayer_VSE_symmetric.h ../head/util.h
+playgame_VSE.o: playgame_VSE.cpp ../head/game2048.h ../head/symmetric.h ../head/tdplayer_VSE_symmetric2.h ../head/util.h
 game2048.o: game2048.cpp ../head/game2048.h
 
 # テスト実行（タプル番号0〜7を使用）
@@ -39,34 +39,34 @@ learn: $(LEARN_TARGET)
 build-6:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 clean
 	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=6
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=6
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=6
 	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=6
 	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=6
-	g++ $(LFLAGS) -o playgame_VSE_6 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
+	g++ $(LFLAGS) -o playgame_VSE_6 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 build-7:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 clean
 	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=7
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=7
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=7
 	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=7
 	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=7
-	g++ $(LFLAGS) -o playgame_VSE_7 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
+	g++ $(LFLAGS) -o playgame_VSE_7 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 build-8:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 clean
 	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=8
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=8
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=8
 	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=8
 	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=8
-	g++ $(LFLAGS) -o playgame_VSE_8 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
+	g++ $(LFLAGS) -o playgame_VSE_8 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 build-9:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 clean
 	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=9
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric.cpp -DTUPLE_FILE_TYPE=9
+	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=9
 	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=9
 	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=9
-	g++ $(LFLAGS) -o playgame_VSE_9 playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
+	g++ $(LFLAGS) -o playgame_VSE_9 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 # 異なるタプルファイルでビルドして実行（seed 0~9）
 run-6:
