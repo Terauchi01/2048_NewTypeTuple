@@ -206,7 +206,7 @@ int calcEvFiltered(const board_t &board) {
           const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-  int base = i % SYMMETRIC_TUPLE_NUM;
+  int base = i % NUM_TUPLE;
   int val = Evs[stage][f][base][index];
 #if DEBUG_CALC_EV
   static int dbg_filters_printed = 0;
@@ -237,7 +237,9 @@ void init_tuple() {
   }
   // 評価値の初期化: 全て0で初期化
   constexpr size_t EvsCount = size_t(NUM_STAGES) * NUM_SPLIT * NUM_TUPLE * ARRAY_LENGTH;
-  fill_n(&Evs[0][0][0][0], EvsCount, (EV_INIT << SIFT));
+  int n = 1;
+  n <<= SIFT;
+  fill_n(&Evs[0][0][0][0], EvsCount, (EV_INIT_VALUE * n));
   fill_n(&Errs[0][0][0][0], EvsCount, 0);
   fill_n(&Aerrs[0][0][0][0], EvsCount, 0);
   fill_n(&Updatecounts[0][0][0][0], EvsCount, 0);
@@ -282,6 +284,7 @@ static void learningUpdate(const board_t& before, int delta)
   // 差分をタプル数,フィルター数で割る
   double stage_delta = q10_to_double(delta);
   stage_delta = stage_delta / (AVAIL_TUPLE * SYMMETRIC_TUPLE_NUM * NUM_SPLIT);
+  int stage_delta_int = q10_raw_from_double(stage_delta); // 1/1024単位に変換
 
   // int stage_delta = delta;
   int stage = get_stage(before);
@@ -300,15 +303,26 @@ static void learningUpdate(const board_t& before, int delta)
           const int tile = min(filtered_boards[f][posSym[k][j]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        int base = k % SYMMETRIC_TUPLE_NUM;
+        int base = k % NUM_TUPLE;
           // Evs[stage][f][k][index] += stage_delta;
         if (Aerrs[stage][f][base][index] == 0) {
-          Evs[stage][f][base][index] += stage_delta;
+          Evs[stage][f][base][index] += stage_delta_int;
         } else {
-          Evs[stage][f][base][index] += stage_delta * (fabs(Errs[stage][f][base][index])/Aerrs[stage][f][base][index]);
+          double ratio = std::abs((double)Errs[stage][f][base][index]) /
+               (double)Aerrs[stage][f][base][index];   // 単位なしの係数
+
+          // stage_delta_int は Q10。ratio を掛けても Q10 のまま
+          long long delta_add = llround((double)stage_delta_int * ratio);  // 丸めてQ10へ
+
+          // 飽和足し込み
+          long long tmp = (long long)Evs[stage][f][base][index] + delta_add;
+          if (tmp > INT32_MAX) tmp = INT32_MAX;
+          if (tmp < INT32_MIN) tmp = INT32_MIN;
+          Evs[stage][f][base][index] = (int)tmp;
         }
-        Aerrs[stage][f][base][index] += fabs(stage_delta);
-        Errs[stage][f][base][index]  += stage_delta;
+        //AerrsとErrsは小数点なし
+        Aerrs[stage][f][base][index] += fabs((stage_delta_int>>SIFT));
+        Errs[stage][f][base][index]  += (stage_delta_int>>SIFT);
         Updatecounts[stage][f][base][index]++;
       }
     // }
@@ -361,7 +375,7 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
 				   const alldir_int &scores)
 {
   // 評価値の計算（フィルター合計版）
-  int nextEv[4];
+  int nextEv[4] = {0,0,0,0};
   UNROLL_PRAGMA(4)
   for (int i = 0; i < 4; i++) {   // 方向ごと
     if (!canMoves[i]) continue; // 移動できない場合はスキップ
@@ -417,31 +431,3 @@ void TDPlayer::gameEnd()
 {
   learningLast(lastBoard);
 }
-
-// test code
-// int main() {
-//   init_movetable();
-//   init_tuple();
-//   printf("initialization finished\n");
-
-//   return 0;
-// }
-
-// inline void update(const int* board, double diff)
-// {
-//   diff = diff / NUM_TUPLE / 8;
-//   int s = getStage(board);
-
-// #pragma GCC unroll 48
-//   for (int i = 0; i < NUM_TUPLE * 8; i++) {
-//     int index = getIndex(board, i);
-//     if (aerrs[s][i/8][index] == 0) {
-//       evs[s][i/8][index] += diff;
-//     } else {
-//       evs[s][i/8][index] += diff * (fabs(errs[s][i/8][index])/aerrs[s][i/8][index]);
-//     }
-//     aerrs[s][i/8][index] += fabs(diff);
-//     errs[s][i/8][index]  += diff;
-//     updatecounts[s][i/8][index]++;
-//   }
-// }
