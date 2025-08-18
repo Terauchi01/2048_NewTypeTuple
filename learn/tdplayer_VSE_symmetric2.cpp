@@ -47,15 +47,23 @@ using namespace std;
 #endif
 
 // --- _Pragma ラッパ ---
+// 文字列化
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
-#define GCC_UNROLL(n)   _Pragma(STR(GCC unroll n))
-#define CLANG_UNROLL(n) _Pragma(STR(clang loop unroll_count(n)))
-
+#if defined(__CUDACC__)
+  #define UNROLL_PRAGMA(N) _Pragma(STR(unroll N))                     // NVCC
+#elif defined(__clang__)
+  #define UNROLL_PRAGMA(N) _Pragma(STR(clang loop unroll_count(N)))   // Clang / AppleClang
+#elif defined(__GNUC__)
+  #define UNROLL_PRAGMA(N) _Pragma(STR(GCC unroll N))                 // GCC
+#else
+  #define UNROLL_PRAGMA(N) /* fallback: 何もしない */
+#endif
 // filter mapping: [filter][tile_value] -> mapped_value
 static int filter_mapping[NUM_SPLIT][MAX_TILE_VALUE+1];
 
 static void build_filter_mapping() {
+  UNROLL_PRAGMA(MAX_TILE_VALUE+1)
   for (int v = 0; v <= MAX_TILE_VALUE; ++v) {
     // first
     if (v == 0) filter_mapping[0][v] = 0;
@@ -80,13 +88,23 @@ static void build_filter_mapping() {
 
 // apply mapping to produce NUM_SPLIT filtered boards
 static inline void apply_filters_from_mapping(const board_t &board, board_t filtered_boards[NUM_SPLIT]) {
-  for (int f = 0; f < NUM_SPLIT; ++f) {
-    for (int i = 0; i < 16; ++i) {
-      int v = board[i];
-      if (v < 0) v = 0; 
-      if (v > MAX_TILE_VALUE) v = MAX_TILE_VALUE;
-      filtered_boards[f][i] = filter_mapping[f][v];
-    }
+  // UNROLL_PRAGMA(NUM_SPLIT*16)
+  // for (int f = 0; f < NUM_SPLIT; ++f) {
+  //   for (int i = 0; i < 16; ++i) {
+  //     int v = board[i];
+  //     if (v < 0) v = 0; 
+  //     if (v > MAX_TILE_VALUE) v = MAX_TILE_VALUE;
+  //     filtered_boards[f][i] = filter_mapping[f][v];
+  //   }
+  // }
+  UNROLL_PRAGMA(NUM_SPLIT*16)
+  for (int fi = 0; fi < NUM_SPLIT*16; ++fi) {
+    int f = fi/16;
+    int i = fi%16; 
+    int v = board[i];
+    if (v < 0) v = 0; 
+    if (v > MAX_TILE_VALUE) v = MAX_TILE_VALUE;
+    filtered_boards[f][i] = filter_mapping[f][v];
   }
 }
 
@@ -111,6 +129,7 @@ void output_ev(int seed,int suffix) {
 
 // ステージ判定関数：STAGE_THRESHOLD以上の値があるかでステージを決定
 inline int get_stage(const board_t &board) {
+  UNROLL_PRAGMA(16)
   for (int i = 0; i < 16; i++) {
     if (board[i] >= STAGE_THRESHOLD) {
       return 1; // 高ステージ
@@ -180,15 +199,13 @@ int calcEvFiltered(const board_t &board) {
   
   // 各フィルターを適用 (mapping 方式)
   apply_filters_from_mapping(board, filtered_boards);
-  #if defined(__clang__)
-    #define UNROLL_PRAGMA CLANG_UNROLL(UNROLL_COUNT)
-  #else
-    #define UNROLL_PRAGMA GCC_UNROLL(UNROLL_COUNT)
-  #endif
+  UNROLL_PRAGMA(UNROLL_COUNT)
   for (int i = 0; i < UNROLL_COUNT; i++) {
     // for (int j = 0; j < 8; j++) {
+      UNROLL_PRAGMA(NUM_SPLIT)
       for (int f = 0; f < NUM_SPLIT; f++) {
         int index = 0;
+        UNROLL_PRAGMA(TUPLE_SIZE)
         for (int k = 0; k < TUPLE_SIZE; k++) {
           const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
@@ -223,8 +240,11 @@ void init_tuple() {
     printf("]\n");
   }
   // 評価値の初期化: 全て0で初期化
+  UNROLL_PRAGMA(NUM_STAGES)
   for (int s = 0; s < NUM_STAGES; s++) {
+    UNROLL_PRAGMA(NUM_SPLIT)
     for (int sp = 0; sp < NUM_SPLIT; sp++) {
+      UNROLL_PRAGMA(NUM_TUPLE)
       for (int i = 0; i < NUM_TUPLE; i++) {
         for (int j = 0; j < ARRAY_LENGTH; j++) {
           Evs[s][sp][i][j] = EV_INIT_VALUE;
@@ -252,6 +272,7 @@ inline int min(int a, int b) {
 
 inline int getIndex(const board_t &board, int tuple_id) {
   int index = 0;                 // 現在のボードのタプルのインデックス
+  UNROLL_PRAGMA(TUPLE_SIZE)
   for (int j = 0; j < TUPLE_SIZE; j++) {
     const int tile = min(board[posSym[tuple_id][j]], VARIATION_TILE);
     index = index * VARIATION_TILE + tile;
@@ -265,10 +286,13 @@ inline int getIndex(const board_t &board, int tuple_id) {
 inline int getSmallerIndex(int index)
 {
   int tiles[NUM_TUPLE];
+  UNROLL_PRAGMA(NUM_TUPLE)
   for (int i = 0; i < NUM_TUPLE; i++) {
-    tiles[i] = index % VARIATION_TILE; index /= VARIATION_TILE;
+    tiles[i] = index % VARIATION_TILE;
+    index /= VARIATION_TILE;
   }
   int smaller = 0;
+  UNROLL_PRAGMA(NUM_TUPLE)
   for (int i = NUM_TUPLE - 1; i >= 0; i--) {
     smaller = smaller * VARIATION_TILE + (tiles[i] > 0 ? (tiles[i] - 1) : 0);
   }
@@ -279,35 +303,31 @@ inline int getSmallerIndex(int index)
 static void learningUpdate(const board_t& before, int delta)
 {
   // 差分をタプル数,フィルター数で割る
-  int stage_delta = delta / (NUM_SPLIT*UNROLL_COUNT);
+  int stage_delta = delta;
   int stage = get_stage(before);
   
   board_t filtered_boards[NUM_SPLIT];
   
   // 各フィルターを適用 (mapping 方式)
   apply_filters_from_mapping(before, filtered_boards);
-  
-  /* request loop unrolling: use UNROLL_COUNT from Makefile (passed via -DUNROLL_COUNT) */
-#if defined(__clang__)
-  #define UNROLL_PRAGMA CLANG_UNROLL(UNROLL_COUNT)
-#else
-  #define UNROLL_PRAGMA GCC_UNROLL(UNROLL_COUNT)
-#endif
-  for (int k = 0; k < AVAIL_TUPLE*SYMMETRIC_TUPLE_NUM; k++) { // タプルごとのループ
-    // for (int sym = 0; sym < 8; sym++) { // 対称変換ごとのループ
+  UNROLL_PRAGMA(AVAIL_TUPLE)
+  for (int k = 0; k < AVAIL_TUPLE; k++) { // タプルごとのループ
+    UNROLL_PRAGMA(NUM_SPLIT)
       for (int f = 0; f < NUM_SPLIT; f++) { // フィルターごとのループ
         int index = 0;
+        UNROLL_PRAGMA(TUPLE_SIZE)
         for (int j = 0; j < TUPLE_SIZE; j++) {
           const int tile = min(filtered_boards[f][posSym[k][j]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        // printf("before Evs[stage][f][k/8][index]: %d %d\n", Evs[stage][f][k/SYMMETRIC_TUPLE_NUM][index],stage_delta);
-        Evs[stage][f][k/SYMMETRIC_TUPLE_NUM][index] += stage_delta;
-        // printf("after Evs[stage][f][k/8][index]: %d\n", Evs[stage][f][k/SYMMETRIC_TUPLE_NUM][index]);
+        // printf("before Evs[stage][f][k/8][index]: %d %d\n", Evs[stage][f][k][index],stage_delta);
+        Evs[stage][f][k][index] += stage_delta;
+        // printf("after Evs[stage][f][k/8][index]: %d\n", Evs[stage][f][k][index]);
       }
     // }
   }
-}  
+}
+
 void learning(const board_t &before, const board_t &after, int rewards)
 {
   const int thisEvV = calcEvFiltered(before);
@@ -344,6 +364,7 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
 {
   // 評価値の計算（フィルター合計版）
   int nextEv[4];
+  UNROLL_PRAGMA(4)
   for (int i = 0; i < 4; i++) {   // 方向ごと
     if (!canMoves[i]) continue; // 移動できない場合はスキップ
     nextEv[i] = calcEvFiltered(nextBoards[i]) + (scores[i] << 10);
@@ -360,6 +381,7 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
   
   // 最大の評価値を選択
   int maxi = -1; int maxv = 0;
+  UNROLL_PRAGMA(4)
   for (int i = 0; i < 4; i++) { // 方向ごと
     if (!canMoves[i]) continue;
     if (maxi == -1) {
@@ -384,6 +406,7 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
   }
 
   // lastBoardを更新
+  UNROLL_PRAGMA(16)
   for (int i = 0; i < 16; i++) {
     lastBoard[i] = nextBoards[selected][i];
   }
