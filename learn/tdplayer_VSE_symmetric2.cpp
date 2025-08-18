@@ -5,6 +5,7 @@ using namespace std;
 #include "../head/symmetric.h"
 #include "../head/tdplayer_VSE_symmetric2.h"
 #include "../head/util.h"
+#include "../head/fixed_q10.hpp"
 #include <random>
 using namespace std;
 
@@ -12,6 +13,7 @@ using namespace std;
 #define NUM_STAGES 2
 #define NUM_SPLIT 4
 #define EV_INIT 320000
+#define SIFT 10
 
 // ステージ判定用閾値（この値以上の数字があるかでステージを決定）
 #define STAGE_THRESHOLD 14
@@ -88,15 +90,6 @@ static void build_filter_mapping() {
 
 // apply mapping to produce NUM_SPLIT filtered boards
 static inline void apply_filters_from_mapping(const board_t &board, board_t filtered_boards[NUM_SPLIT]) {
-  // UNROLL_PRAGMA(NUM_SPLIT*16)
-  // for (int f = 0; f < NUM_SPLIT; ++f) {
-  //   for (int i = 0; i < 16; ++i) {
-  //     int v = board[i];
-  //     if (v < 0) v = 0; 
-  //     if (v > MAX_TILE_VALUE) v = MAX_TILE_VALUE;
-  //     filtered_boards[f][i] = filter_mapping[f][v];
-  //   }
-  // }
   UNROLL_PRAGMA(NUM_SPLIT*16)
   for (int fi = 0; fi < NUM_SPLIT*16; ++fi) {
     int f = fi/16;
@@ -109,6 +102,9 @@ static inline void apply_filters_from_mapping(const board_t &board, board_t filt
 }
 
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+int Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+int Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
 
 //#include "selected_7_tuples.h"
@@ -177,7 +173,7 @@ void debugFilteredBoards(const board_t &board) {
           const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        ev_filters[f] += Evs[stage][f][i/SYMMETRIC_TUPLE_NUM][index];
+        ev_filters[f] += Evs[stage][f][i%SYMMETRIC_TUPLE_NUM][index];
       }
   }
   
@@ -210,7 +206,7 @@ int calcEvFiltered(const board_t &board) {
           const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-  int base = i / SYMMETRIC_TUPLE_NUM;
+  int base = i % SYMMETRIC_TUPLE_NUM;
   int val = Evs[stage][f][base][index];
 #if DEBUG_CALC_EV
   static int dbg_filters_printed = 0;
@@ -240,35 +236,16 @@ void init_tuple() {
     printf("]\n");
   }
   // 評価値の初期化: 全て0で初期化
-  UNROLL_PRAGMA(NUM_STAGES)
-  for (int s = 0; s < NUM_STAGES; s++) {
-    UNROLL_PRAGMA(NUM_SPLIT)
-    for (int sp = 0; sp < NUM_SPLIT; sp++) {
-      UNROLL_PRAGMA(NUM_TUPLE)
-      for (int i = 0; i < NUM_TUPLE; i++) {
-        for (int j = 0; j < ARRAY_LENGTH; j++) {
-          Evs[s][sp][i][j] = EV_INIT_VALUE;
-        }
-      }
-    }
-  }
+  constexpr size_t EvsCount = size_t(NUM_STAGES) * NUM_SPLIT * NUM_TUPLE * ARRAY_LENGTH;
+  fill_n(&Evs[0][0][0][0], EvsCount, (EV_INIT << SIFT));
+  fill_n(&Errs[0][0][0][0], EvsCount, 0);
+  fill_n(&Aerrs[0][0][0][0], EvsCount, 0);
+  fill_n(&Updatecounts[0][0][0][0], EvsCount, 0);
 }
 
 inline int min(int a, int b) {
   return (a < b) ? a : b;
 }
-
-// inline int getIndexSym(const board_t &board, int tuple_id, int sym_id) {
-//   int index = 0;                 // 現在のボードのタプルのインデックス
-//   for (int j = 0; j < TUPLE_SIZE; j++) {
-//     const int tile = min(board[posSym[tuple_id][sym_id][j]], VARIATION_TILE);
-//     index = index * VARIATION_TILE + tile;
-//   }
-//   if (index < 0 || index >= ARRAY_LENGTH) {
-//     printf("Error index: %d\n", index);
-//   }
-//   return index;
-// }
 
 inline int getIndex(const board_t &board, int tuple_id) {
   int index = 0;                 // 現在のボードのタプルのインデックス
@@ -303,15 +280,18 @@ inline int getSmallerIndex(int index)
 static void learningUpdate(const board_t& before, int delta)
 {
   // 差分をタプル数,フィルター数で割る
-  int stage_delta = delta;
+  double stage_delta = q10_to_double(delta);
+  stage_delta = stage_delta / (AVAIL_TUPLE * SYMMETRIC_TUPLE_NUM * NUM_SPLIT);
+
+  // int stage_delta = delta;
   int stage = get_stage(before);
   
   board_t filtered_boards[NUM_SPLIT];
   
   // 各フィルターを適用 (mapping 方式)
   apply_filters_from_mapping(before, filtered_boards);
-  UNROLL_PRAGMA(AVAIL_TUPLE)
-  for (int k = 0; k < AVAIL_TUPLE; k++) { // タプルごとのループ
+  UNROLL_PRAGMA(AVAIL_TUPLE*SYMMETRIC_TUPLE_NUM)
+  for (int k = 0; k < AVAIL_TUPLE*SYMMETRIC_TUPLE_NUM; k++) { // タプルごとのループ
     UNROLL_PRAGMA(NUM_SPLIT)
       for (int f = 0; f < NUM_SPLIT; f++) { // フィルターごとのループ
         int index = 0;
@@ -320,19 +300,37 @@ static void learningUpdate(const board_t& before, int delta)
           const int tile = min(filtered_boards[f][posSym[k][j]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        // printf("before Evs[stage][f][k/8][index]: %d %d\n", Evs[stage][f][k][index],stage_delta);
-        Evs[stage][f][k][index] += stage_delta;
-        // printf("after Evs[stage][f][k/8][index]: %d\n", Evs[stage][f][k][index]);
+        int base = k % SYMMETRIC_TUPLE_NUM;
+          // Evs[stage][f][k][index] += stage_delta;
+        if (Aerrs[stage][f][base][index] == 0) {
+          Evs[stage][f][base][index] += stage_delta;
+        } else {
+          Evs[stage][f][base][index] += stage_delta * (fabs(Errs[stage][f][base][index])/Aerrs[stage][f][base][index]);
+        }
+        Aerrs[stage][f][base][index] += fabs(stage_delta);
+        Errs[stage][f][base][index]  += stage_delta;
+        Updatecounts[stage][f][base][index]++;
       }
     // }
   }
+  //   for (int i = 0; i < NUM_TUPLE * 8; i++) {
+//     int index = getIndex(board, i);
+//     if (aerrs[s][i/8][index] == 0) {
+//       evs[s][i/8][index] += diff;
+//     } else {
+//       evs[s][i/8][index] += diff * (fabs(errs[s][i/8][index])/aerrs[s][i/8][index]);
+//     }
+//     aerrs[s][i/8][index] += fabs(diff);
+//     errs[s][i/8][index]  += diff;
+//     updatecounts[s][i/8][index]++;
+//   }
 }
 
 void learning(const board_t &before, const board_t &after, int rewards)
 {
   const int thisEvV = calcEvFiltered(before);
   const int nextEvV = calcEvFiltered(after);
-  const int delta = rewards + ((nextEvV - thisEvV) >> 10); // V(S)とV'(S)の差分（1/1024単位）
+  const int delta = (rewards << SIFT) + (nextEvV - thisEvV); // V(S)とV'(S)の差分（1/1024単位）
   
 #if DEBUG_FILTERED_BOARDS
   printf("=== Learning Debug Info ===\n");
@@ -348,7 +346,7 @@ void learning(const board_t &before, const board_t &after, int rewards)
 void learningLast(const board_t &before)
 {
   const int thisEvV = calcEvFiltered(before);
-  const int delta = 0 + ((0 - thisEvV) >> 10); // V(S)とV'(S)の差分（1/1024単位）
+  const int delta = (0 << SIFT) + (0 - thisEvV); // V(S)とV'(S)の差分（1/1024単位）
   learningUpdate(before, delta);
 }
 
@@ -429,3 +427,21 @@ void TDPlayer::gameEnd()
 //   return 0;
 // }
 
+// inline void update(const int* board, double diff)
+// {
+//   diff = diff / NUM_TUPLE / 8;
+//   int s = getStage(board);
+
+// #pragma GCC unroll 48
+//   for (int i = 0; i < NUM_TUPLE * 8; i++) {
+//     int index = getIndex(board, i);
+//     if (aerrs[s][i/8][index] == 0) {
+//       evs[s][i/8][index] += diff;
+//     } else {
+//       evs[s][i/8][index] += diff * (fabs(errs[s][i/8][index])/aerrs[s][i/8][index]);
+//     }
+//     aerrs[s][i/8][index] += fabs(diff);
+//     errs[s][i/8][index]  += diff;
+//     updatecounts[s][i/8][index]++;
+//   }
+// }
