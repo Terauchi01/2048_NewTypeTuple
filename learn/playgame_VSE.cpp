@@ -11,11 +11,11 @@ using namespace std;
 #include "../head/util.h"
 
 int putTile2Random(const board_t &board, mt19937 &mt);
-#define NUM_GAMES 100000000
-// #define NUM_GAMES 10
+// #define NUM_GAMES 100000000
+#define NUM_GAMES 10
 #define LOGCOUNT 10000
 #define EVOUTPUT 2000000
-#define NUM_THREADS 12
+#define NUM_THREADS 1
 int loopCount = 0;
 int seed = 0;
 

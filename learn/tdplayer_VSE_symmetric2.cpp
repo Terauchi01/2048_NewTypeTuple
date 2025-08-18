@@ -7,26 +7,22 @@ using namespace std;
 #include "../head/util.h"
 #include <random>
 using namespace std;
-// #include "game2048.h"
-// #include "symmetric.h"
-// #include "tdplayer_VSE_symmetric.h"
-// #include "util.h"
 
 #define VARIATION_TILE 7
-// #define TUPLE_SIZE 6
-// #define NUM_TUPLE 9
 #define NUM_STAGES 2
 #define NUM_SPLIT 4
-// #define NUM_TUPLE 10
-#define ARRAY_LENGTH (VARIATION_TILE * VARIATION_TILE * VARIATION_TILE * VARIATION_TILE * VARIATION_TILE * VARIATION_TILE)
-
-#define EV_INIT_VALUE 320000
+#define EV_INIT 320000
 
 // ステージ判定用閾値（この値以上の数字があるかでステージを決定）
 #define STAGE_THRESHOLD 14
 
 // デバッグフラグ (1にするとデバッグ情報を表示)
 #define DEBUG_FILTERED_BOARDS 0
+
+// calcEv デバッグ出力 (1 にするとログを出す)
+#ifndef DEBUG_CALC_EV
+#define DEBUG_CALC_EV 0
+#endif
 
 #ifndef TUPLE_FILE_TYPE
 #define TUPLE_FILE_TYPE 6
@@ -123,70 +119,6 @@ inline int get_stage(const board_t &board) {
   return 0; // 低ステージ
 }
 
-// --- フィルター関数群（void型＋出力引数） ---
-void get_filtered_board_first(const board_t &board, board_t &filtered) {
-  for (int i = 0; i < 16; ++i){
-    if(board[i] == 0){
-        filtered[i] = 0;
-    }
-    else if(board[i] > 5){
-        filtered[i] = 6;
-    }
-    else{
-        filtered[i] = board[i];
-    }
-  }
-}
-
-void get_filtered_board_second(const board_t &board, board_t &filtered) {
-  for (int i = 0; i < 16; ++i){
-    if(board[i] == 0){
-        filtered[i] = 0;
-    }
-    else if(board[i] <= 5){
-        filtered[i] = 1;
-    }
-    else if(board[i] > 9){
-        filtered[i] = 6;
-    }
-    else{
-        filtered[i] = board[i]-4;
-    }
-  }
-}
-
-void get_filtered_board_third(const board_t &board, board_t &filtered) {
-  for (int i = 0; i < 16; ++i){
-    if(board[i] == 0){
-        filtered[i] = 0;
-    }
-    else if(board[i] <= 9){
-        filtered[i] = 1;
-    }
-    else if(board[i] > 13){
-        filtered[i] = 6;
-    }
-    else{
-        filtered[i] = board[i]-8;
-    }
-  }
-}
-
-// 4つ目のフィルター
-void get_filtered_board_fourth(const board_t &board, board_t &filtered) {
-  for (int i = 0; i < 16; ++i){
-    if(board[i] == 0){
-        filtered[i] = 0;
-    }
-    else if(board[i] < 14){
-        filtered[i] = 1;
-    }
-    else{
-        filtered[i] = board[i]-12;
-    }
-  }
-}
-
 // (filterFunctions removed; using mapping and apply_filters_from_mapping)
 
 // デバッグ用: フィルターをかけた盤面とその評価値を表示
@@ -219,14 +151,14 @@ void debugFilteredBoards(const board_t &board) {
   int ev_filters[NUM_SPLIT] = {0};
   int stage = get_stage(board);
   
-  for (int i = 0; i < NUM_TUPLE; i++) {
+  for (int i = 0; i < UNROLL_COUNT; i++) {
       for (int f = 0; f < NUM_SPLIT; f++) {
         int index = 0;
         for (int k = 0; k < TUPLE_SIZE; k++) {
           const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        ev_filters[f] += Evs[stage][f][i][index];
+        ev_filters[f] += Evs[stage][f][i/SYMMETRIC_TUPLE_NUM][index];
       }
   }
   
@@ -248,8 +180,12 @@ int calcEvFiltered(const board_t &board) {
   
   // 各フィルターを適用 (mapping 方式)
   apply_filters_from_mapping(board, filtered_boards);
-  
-  for (int i = 0; i < NUM_TUPLE; i++) {
+  #if defined(__clang__)
+    #define UNROLL_PRAGMA CLANG_UNROLL(UNROLL_COUNT)
+  #else
+    #define UNROLL_PRAGMA GCC_UNROLL(UNROLL_COUNT)
+  #endif
+  for (int i = 0; i < UNROLL_COUNT; i++) {
     // for (int j = 0; j < 8; j++) {
       for (int f = 0; f < NUM_SPLIT; f++) {
         int index = 0;
@@ -257,7 +193,17 @@ int calcEvFiltered(const board_t &board) {
           const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        ev += Evs[stage][f][i/8][index];
+  int base = i / SYMMETRIC_TUPLE_NUM;
+  int val = Evs[stage][f][base][index];
+#if DEBUG_CALC_EV
+  static int dbg_filters_printed = 0;
+  if (dbg_filters_printed < 200) {
+    printf("[calcEvFiltered] i=%d f=%d base=%d index=%d val=%d\n", i, f, base, index, val);
+    fflush(stdout);
+    dbg_filters_printed++;
+  }
+#endif
+  ev += val;
       }
     // }
   }
@@ -329,36 +275,11 @@ inline int getSmallerIndex(int index)
   return smaller;
 }
 
-// （全ての対称形を考慮）対称形でのタプルの評価値合計を返す
-inline int calcEv(const board_t &board)
-{
-  int ev = 0;
-  int stage = get_stage(board);
-  /* request loop unrolling: use UNROLL_COUNT from Makefile (passed via -DUNROLL_COUNT) */
-#if defined(__clang__)
-  #define UNROLL_PRAGMA CLANG_UNROLL(UNROLL_COUNT)
-#else
-  #define UNROLL_PRAGMA GCC_UNROLL(UNROLL_COUNT)
-#endif
-  for (int k = 0; k < AVAIL_TUPLE*SYMMETRIC_TUPLE_NUM; k++) { // タプルごとのループ
-    // for (int sym = 0; sym < 8; sym++) { // 対称変換ごとのループ
-      const int index = getIndex(board, k);
-      if (Evs[stage][0][k/8][index] == EV_INIT_VALUE) {
-        // 評価値が未定義のタイルの場合は評価値を更新
-        const int smaller_index = getSmallerIndex(index);
-        Evs[stage][0][k/8][index] = Evs[stage][0][k/8][smaller_index];
-      }
-      ev += Evs[stage][0][k/8][index]; // 最終的な評価値に加算
-    // }
-  }
-  return ev;
-}
-
 // 学習のための関数２
 static void learningUpdate(const board_t& before, int delta)
 {
-  // NUM_SPLITつのフィルターで分割したので、deltaをNUM_SPLITで割る
-  int stage_delta = delta / NUM_SPLIT;
+  // 差分をタプル数,フィルター数で割る
+  int stage_delta = delta / (NUM_SPLIT*UNROLL_COUNT);
   int stage = get_stage(before);
   
   board_t filtered_boards[NUM_SPLIT];
@@ -380,7 +301,9 @@ static void learningUpdate(const board_t& before, int delta)
           const int tile = min(filtered_boards[f][posSym[k][j]], VARIATION_TILE);
           index = index * VARIATION_TILE + tile;
         }
-        Evs[stage][f][k/8][index] += stage_delta;
+        // printf("before Evs[stage][f][k/8][index]: %d %d\n", Evs[stage][f][k/SYMMETRIC_TUPLE_NUM][index],stage_delta);
+        Evs[stage][f][k/SYMMETRIC_TUPLE_NUM][index] += stage_delta;
+        // printf("after Evs[stage][f][k/8][index]: %d\n", Evs[stage][f][k/SYMMETRIC_TUPLE_NUM][index]);
       }
     // }
   }
