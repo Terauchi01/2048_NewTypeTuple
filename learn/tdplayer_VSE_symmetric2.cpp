@@ -308,11 +308,20 @@ static void learningUpdate(const board_t& before, int delta)
         if (Aerrs[stage][f][base][index] == 0) {
           Evs[stage][f][base][index] += stage_delta_int;
         } else {
-          double ratio = std::abs((double)Errs[stage][f][base][index]) /
-               (double)Aerrs[stage][f][base][index];   // 単位なしの係数
+          // 整数のみで ratio を扱い、丸めを正しく行う（浮動小数点や llround を排除）
+          // delta_add = round(stage_delta_int * (abs(Errs) / Aerrs))
+          long long err_ll = (long long)Errs[stage][f][base][index];
+          long long absErr = (err_ll >= 0) ? err_ll : -err_ll;
+          long long aerr = (long long)Aerrs[stage][f][base][index]; // >0 前提
 
-          // stage_delta_int は Q10。ratio を掛けても Q10 のまま
-          long long delta_add = llround((double)stage_delta_int * ratio);  // 丸めてQ10へ
+          // 分子は符号を持つ可能性がある（stage_delta_int が負のとき）
+          long long numer = (long long)stage_delta_int * absErr; // 64-bit で乗算
+          long long delta_add;
+          if (numer >= 0) {
+            delta_add = (numer + aerr/2) / aerr; // 四捨五入（正の値）
+          } else {
+            delta_add = -(( -numer + aerr/2) / aerr); // 四捨五入（負の値）
+          }
 
           // 飽和足し込み
           long long tmp = (long long)Evs[stage][f][base][index] + delta_add;
@@ -327,17 +336,6 @@ static void learningUpdate(const board_t& before, int delta)
       }
     // }
   }
-  //   for (int i = 0; i < NUM_TUPLE * 8; i++) {
-//     int index = getIndex(board, i);
-//     if (aerrs[s][i/8][index] == 0) {
-//       evs[s][i/8][index] += diff;
-//     } else {
-//       evs[s][i/8][index] += diff * (fabs(errs[s][i/8][index])/aerrs[s][i/8][index]);
-//     }
-//     aerrs[s][i/8][index] += fabs(diff);
-//     errs[s][i/8][index]  += diff;
-//     updatecounts[s][i/8][index]++;
-//   }
 }
 
 void learning(const board_t &before, const board_t &after, int rewards)
