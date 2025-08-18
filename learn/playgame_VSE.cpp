@@ -4,6 +4,8 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <chrono>
+#include <ctime>
 using namespace std;
 #include "../head/game2048.h"
 #include "../head/symmetric.h"
@@ -11,16 +13,22 @@ using namespace std;
 #include "../head/util.h"
 
 int putTile2Random(const board_t &board, mt19937 &mt);
-#define NUM_GAMES 100000000
+// #define NUM_GAMES 100000000
 // #define NUM_GAMES 10
+#define NUM_STEPS 200000000000
+// #define NUM_STEPS 200
 #define LOGCOUNT 10000
-#define EVOUTPUT 2000000
-#define NUM_THREADS 1
+#define EVOUTPUT 1000000
+#define NUM_THREADS 3
 int loopCount = 0;
 int seed = 0;
+long long stepCount = 0;
 
 mutex mtx_for_loopcount;
 mutex mtx_for_logger;
+
+// ログ開始時刻
+std::chrono::steady_clock::time_point start_time;
 
 // logger
 int logcount = 0;
@@ -37,6 +45,23 @@ inline void logger(int score)
     if (minS > score) minS = score;
 
     if (logcount % LOGCOUNT == 0) {
+      // 10000区切りのときに現在時刻と経過時間、累積ターン数、平均ターン/秒を出力
+      if(logcount % 10000 == 0 || logcount == 1){
+        // システム時刻（人間可読）
+        auto now_sys = std::chrono::system_clock::now();
+        time_t tt = std::chrono::system_clock::to_time_t(now_sys);
+        char timestr[64];
+        struct tm tminfo = *localtime(&tt);
+        strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &tminfo);
+
+        // 経過秒数と平均ターン/秒を計算
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - start_time).count();
+        double steps_per_sec = (elapsed > 0) ? (double)stepCount / (double)elapsed : 0.0;
+
+        printf("time,%s,elapsed_sec,%lld,steps,%lld,steps_per_sec,%.2f\n",
+               timestr, (long long)elapsed, (long long)stepCount, steps_per_sec);
+      }
+
       printf("statistics,%d,ave,%d,max,%d,min,%d\n", logcount, (int)(sumS / LOGCOUNT), maxS, minS);
       sumS = 0;
       maxS = 0;
@@ -60,8 +85,9 @@ void run_tdlearning(int seed)
     int curLoop;
     mtx_for_loopcount.lock();
     {
-      if (loopCount >= NUM_GAMES) { mtx_for_loopcount.unlock(); break; }
-      curLoop = loopCount++;
+      // 終了条件はゲーム数ではなくゲーム内のターン数（stepCount）にする
+      if (stepCount >= NUM_STEPS) { mtx_for_loopcount.unlock(); break; }
+      curLoop = loopCount++; // ゲーム番号（表示用）
     }
     mtx_for_loopcount.unlock();
 
@@ -99,6 +125,12 @@ void run_tdlearning(int seed)
       turn++;
     }
     player.gameEnd();
+      // ターン（学習回数）をカウント
+      mtx_for_loopcount.lock();
+      {
+        stepCount += turn;
+      }
+      mtx_for_loopcount.unlock();
 
     printf("game,%d,sco,%d,big,%d,turn,%d\n", curLoop+1, myScore, biggestTile(board), turn);
     logger(myScore);
@@ -115,6 +147,9 @@ int main(int argc, char** argv)
     usage(); exit(1);
   }
   seed = atoi(argv[1]);
+
+  // ログ開始時刻を記録
+  start_time = std::chrono::steady_clock::now();
     
   init_movetable();
   init_tuple();  // 全てのタプルを使用するため引数不要
