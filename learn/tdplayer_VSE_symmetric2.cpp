@@ -46,9 +46,9 @@ using namespace std;
 #elif TUPLE_FILE_TYPE == 8
   #include "../head/selected_8_tuples_sym.h"
   static const uint8_t filter_mapping[3][18] = {
-    { 0, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7 },
-    { 0, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7 },
-    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6 }
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5 }
   };
   // #define DEFAULT_UNROLL_COUNT 40
 #elif TUPLE_FILE_TYPE == 9

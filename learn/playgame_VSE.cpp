@@ -100,8 +100,13 @@ void run_tdlearning(int seed)
     int restart_scores[100000];
     int restart_count = 0;
     int restart_start = 0;
+    int restart_turns[1000]; // リスタートしたターン数を記録する配列
     
     player.gameStart();
+    int save_loop;
+    int save_score;
+    int save_bigtile;
+    int save_turn;
     while (true) { // turn ループのターンループ
       // CPU側: ランダム配置
       int play = putTile2Random(board, mt);
@@ -118,20 +123,30 @@ void run_tdlearning(int seed)
 
       // 以下, 移動できないならwhile文を抜けて次のゲームへ
       if (!canMoves[0] && !canMoves[1] && !canMoves[2] && !canMoves[3]) {
-          // printf("gameover\n");
-          // for (int i = 0; i < 16; i++) {
-          //     printf("%2d ", board[i]);
-          //     if (i % 4 == 3) printf("\n");
-          // }
+          if(restart_count == 0){
+            //後で保存するようのリスタートしてない時の変数の保存
+            save_loop = curLoop+1;
+            save_score = myScore;
+            save_bigtile = biggestTile(board);
+            save_turn = turn;
+          }
+          player.gameEnd();
+          // ターン（学習回数）をカウント
+          mtx_for_loopcount.lock();
+          {
+            stepCount += turn-restart_start;
+          }
+          mtx_for_loopcount.unlock();
         	if (turn - restart_start < RESTART_LENGTH) {
             // リスタート不可：進捗が足りない
-            printf("no restart turn %d\n", turn - restart_start);
+            // printf("no restart turn %d\n", turn - restart_start);
             break;
           } else {
             // リスタート実行
+            restart_turns[restart_count] = turn; // 現在のターン数を記録
             restart_count++;
             int new_restart_point = (restart_start + turn) / 2;
-            printf("restart: from turn %d to turn %d (game %d)\n", turn, new_restart_point, curLoop+1);
+            // printf("restart: from turn %d to turn %d (game %d)\n", turn, new_restart_point, curLoop+1);
             
             // stepCount更新（今回のリスタートまでのターン数を追加）
             mtx_for_loopcount.lock();
@@ -157,7 +172,7 @@ void run_tdlearning(int seed)
                 canMoves[d] = (scores[d] > -1);
             }
             
-            printf("restart_executed: turn=%d, score=%d, big=%d\n", turn, myScore, biggestTile(board));
+            // printf("restart_executed: turn=%d, score=%d, big=%d\n", turn, myScore, biggestTile(board));
             // リスタート後は通常フローに戻る（break しない）
           }
       }
@@ -181,7 +196,23 @@ void run_tdlearning(int seed)
       }
       mtx_for_loopcount.unlock();
 
-    printf("game,%d,sco,%d,big,%d,turn,%d\n", curLoop+1, myScore, biggestTile(board), turn);
+    // printf("game,%d,sco,%d,big,%d,turn,%d\n", curLoop+1, myScore, biggestTile(board), turn);
+    
+    // リスタート履歴をまとめて出力（1回以上リスタートした場合のみ）
+    if (restart_count > 0) {
+      // 初回のログ
+      printf("game,%d,sco,%d,big,%d,turn,%d\n", save_loop, save_score, save_bigtile, save_turn);
+      printf("restarts: thread %d turns", seed % NUM_THREADS);
+      for (int i = 0; i < restart_count; i++) {
+        printf(" %d", restart_turns[i]);
+        if (i < restart_count - 1) printf(",");
+      }
+      printf("\n");
+    }
+    else{
+      printf("game,%d,sco,%d,big,%d,turn,%d\n", curLoop+1, myScore, biggestTile(board), turn);
+    }
+    
     logger(myScore);
   }
 }
