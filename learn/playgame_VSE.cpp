@@ -124,19 +124,19 @@ void run_tdlearning(int seed)
             break;
           } else {
             // リスタート
+            restart_count++;
             restart_start = (restart_start + turn) / 2;
             mtx_for_loopcount.lock();
             {
-              stepCount += turn;
+              stepCount += turn-restart_start;
             }
             turn = restart_start;
             mtx_for_loopcount.unlock();
-            // turn = restart_start = (restart_start + turn) / 2;
             for (int d = 0; d < 4; d++) {
                 scores[d] = moveB(restart_points_board[restart_start], nextBoards[d], (enum move_dir)d);
                 canMoves[d] = (scores[d] > -1);
-                printf("[RESTART DEBUG] d=%d, score=%d, canMove=%d\n", d, scores[d], canMoves[d]);
-                printf("nextBoards[%d]:\n", d);
+                // printf("[RESTART DEBUG] d=%d, score=%d, canMove=%d\n", d, scores[d], canMoves[d]);
+                // printf("nextBoards[%d]:\n", d);
                 for (int i = 0; i < 16; i++) {
                     printf("%2d ", nextBoards[d][i]);
                     if (i % 4 == 3) printf("\n");
@@ -161,7 +161,7 @@ void run_tdlearning(int seed)
       // ターン（学習回数）をカウント
       mtx_for_loopcount.lock();
       {
-        stepCount += turn;
+        stepCount += turn-restart_start;
       }
       mtx_for_loopcount.unlock();
 
