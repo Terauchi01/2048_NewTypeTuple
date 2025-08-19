@@ -101,6 +101,7 @@ void run_tdlearning(int seed)
     int restart_count = 0;
     int restart_start = 0;
     int restart_turns[1000]; // リスタートしたターン数を記録する配列
+    int restart_turns_end[1000];
     
     player.gameStart();
     int save_loop;
@@ -129,6 +130,8 @@ void run_tdlearning(int seed)
             save_score = myScore;
             save_bigtile = biggestTile(board);
             save_turn = turn;
+          }else{
+            restart_turns_end[restart_count-1] = turn+restart_start; // リスタートしたターン数を記録
           }
           player.gameEnd();
           // ターン（学習回数）をカウント
@@ -204,7 +207,7 @@ void run_tdlearning(int seed)
       printf("game,%d,sco,%d,big,%d,turn,%d\n", save_loop, save_score, save_bigtile, save_turn);
       printf("restarts: thread %d turns", seed % NUM_THREADS);
       for (int i = 0; i < restart_count; i++) {
-        printf(" %d", restart_turns[i]);
+        printf(" %d", restart_turns_end[i]);
         if (i < restart_count - 1) printf(",");
       }
       printf("\n");

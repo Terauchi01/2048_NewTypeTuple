@@ -1,6 +1,6 @@
 #define AVAIL_TUPLE 5
 #define SYMMETRIC_TUPLE_NUM 8
-#define VARIATION_TILE 8
+#define VARIATION_TILE 9
 #define NUM_TUPLE 5
 #define NUM_SPLIT 3
 #define TUPLE_SIZE 8
