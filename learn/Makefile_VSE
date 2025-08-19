@@ -13,6 +13,7 @@ UNAME_S := $(shell uname -s)
 CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head
 LFLAGS = -pthread -std=c++20
 ifeq ($(UNAME_S),Linux)
+  CFLAGS += -mcmodel=large -march=native
   LFLAGS += -mcmodel=large -march=native
 endif
 

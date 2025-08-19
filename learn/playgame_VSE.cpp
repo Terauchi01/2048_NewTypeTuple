@@ -18,8 +18,9 @@ int putTile2Random(const board_t &board, mt19937 &mt);
 #define NUM_STEPS 200000000000
 // #define NUM_STEPS 200
 #define LOGCOUNT 10000
-#define EVOUTPUT 1000000
+#define EVOUTPUT 10000000
 #define NUM_THREADS 3
+#define RESTART_LENGTH 128
 int loopCount = 0;
 int seed = 0;
 long long stepCount = 0;
@@ -95,6 +96,10 @@ void run_tdlearning(int seed)
     for (int i = 0; i < 16; i++) board[i] = 0;
     int myScore = 0;
     int turn = 1;
+    int restart_points_board[100000][16];
+    int restart_scores[100000];
+    int restart_count = 0;
+    int restart_start = 0;
     
     player.gameStart();
     while (true) { // turn ループのターンループ
@@ -107,21 +112,49 @@ void run_tdlearning(int seed)
       alldir_board nextBoards;
       alldir_int scores;
       for (int d = 0; d < 4; d++) {
-	scores[d] = moveB(board, nextBoards[d], (enum move_dir)d);
-	canMoves[d] = (scores[d] > -1);
+          scores[d] = moveB(board, nextBoards[d], (enum move_dir)d);
+          canMoves[d] = (scores[d] > -1);
       }
 
       // 以下, 移動できないならwhile文を抜けて次のゲームへ
       if (!canMoves[0] && !canMoves[1] && !canMoves[2] && !canMoves[3]) {
-	break;
+        	if (turn - restart_start < RESTART_LENGTH) {
+            // printf("restart end: %d subgames until turns", restart_count);
+            // for (int i = 0; i < restart_count; i++) { printf(" %d", restart_points[i]); } printf("\n");
+            break;
+          } else {
+            // リスタート
+            restart_start = (restart_start + turn) / 2;
+            mtx_for_loopcount.lock();
+            {
+              stepCount += turn;
+            }
+            turn = restart_start;
+            mtx_for_loopcount.unlock();
+            // turn = restart_start = (restart_start + turn) / 2;
+            for (int d = 0; d < 4; d++) {
+                scores[d] = moveB(restart_points_board[restart_start], nextBoards[d], (enum move_dir)d);
+                canMoves[d] = (scores[d] > -1);
+                printf("[RESTART DEBUG] d=%d, score=%d, canMove=%d\n", d, scores[d], canMoves[d]);
+                printf("nextBoards[%d]:\n", d);
+                for (int i = 0; i < 16; i++) {
+                    printf("%2d ", nextBoards[d][i]);
+                    if (i % 4 == 3) printf("\n");
+                }
+            }
+          }
+          // break;
       }
 
       // プレイヤーの手選択
       int dir = player.selectHand(board, canMoves, nextBoards, scores);
       for (int i = 0; i < 16; i++) {
-	board[i] = nextBoards[dir][i];
+          int tmp = nextBoards[dir][i];
+          board[i] = tmp;
+          restart_points_board[turn][i] = tmp; 
       }
       myScore += scores[dir];
+      restart_scores[turn] = myScore;
       turn++;
     }
     player.gameEnd();
