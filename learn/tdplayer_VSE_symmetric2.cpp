@@ -9,9 +9,7 @@ using namespace std;
 #include <random>
 using namespace std;
 
-#define VARIATION_TILE 7
 #define NUM_STAGES 2
-#define NUM_SPLIT 4
 #define EV_INIT 320000
 #define SIFT 10
 
@@ -34,18 +32,42 @@ using namespace std;
 
 #if TUPLE_FILE_TYPE == 6
   #include "../head/selected_6_tuples_sym.h"
+  static const uint8_t filter_mapping[1][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 }
+  };
   // #define DEFAULT_UNROLL_COUNT 72
 #elif TUPLE_FILE_TYPE == 7
   #include "../head/selected_7_tuples_sym.h"
+  static const uint8_t filter_mapping[2][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 10, 10, 10, 10 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+  };
   // #define DEFAULT_UNROLL_COUNT 64
 #elif TUPLE_FILE_TYPE == 8
   #include "../head/selected_8_tuples_sym.h"
+  static const uint8_t filter_mapping[3][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7 },
+    { 0, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6 }
+  };
   // #define DEFAULT_UNROLL_COUNT 40
 #elif TUPLE_FILE_TYPE == 9
   #include "../head/selected_9_tuples_sym.h"
+  static const uint8_t filter_mapping[4][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5 }
+  };
   // #define DEFAULT_UNROLL_COUNT 56
 #else
   #error "Invalid TUPLE_FILE_TYPE specified"
+  static const uint8_t filter_mapping[4][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5 }
+  };
 #endif
 
 // --- _Pragma ラッパ ---
@@ -61,12 +83,6 @@ using namespace std;
 #else
   #define UNROLL_PRAGMA(N) /* fallback: 何もしない */
 #endif
-static const uint8_t filter_mapping[4][18] = {
-  { 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
-  { 0, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6 },
-  { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6 },
-  { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5 }
-};
 
 // apply mapping to produce NUM_SPLIT filtered boards
 static inline void apply_filters_from_mapping(const board_t &board, board_t filtered_boards[NUM_SPLIT]) {
@@ -82,7 +98,7 @@ static inline void apply_filters_from_mapping(const board_t &board, board_t filt
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 float Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 float Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
-int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+// int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
 
 //#include "selected_7_tuples.h"
@@ -131,7 +147,7 @@ void debugFilteredBoards(const board_t &board) {
   }
   
   // 各フィルター後のボード表示
-  const char* filter_names[NUM_SPLIT] = {"First", "Second", "Third", "Fourth"};
+  const char* filter_names[4] = {"First", "Second", "Third", "Fourth"};
   for (int f = 0; f < NUM_SPLIT; f++) {
     printf("\nFiltered board (%s):\n", filter_names[f]);
     for (int i = 0; i < 16; i++) {
@@ -218,7 +234,7 @@ void init_tuple() {
   fill_n(&Evs[0][0][0][0], EvsCount, (EV_INIT_VALUE * n));
   fill_n(&Errs[0][0][0][0], EvsCount, 0);
   fill_n(&Aerrs[0][0][0][0], EvsCount, 0);
-  fill_n(&Updatecounts[0][0][0][0], EvsCount, 0);
+  // fill_n(&Updatecounts[0][0][0][0], EvsCount, 0);
 }
 
 inline int min(int a, int b) {
@@ -257,7 +273,6 @@ inline int getSmallerIndex(int index)
 // 学習のための関数２
 static void learningUpdate(const board_t& before, int delta)
 {
-  __asm("nop");
   // 差分をタプル数,フィルター数で割る
   double stage_delta = q10_to_double(delta);
   stage_delta = stage_delta / (AVAIL_TUPLE * SYMMETRIC_TUPLE_NUM * NUM_SPLIT);
@@ -287,11 +302,9 @@ static void learningUpdate(const board_t& before, int delta)
         float stage_delta_float = (float)stage_delta;
         Aerrs[stage][f][base][index] += fabs(stage_delta_float);
         Errs[stage][f][base][index]  += stage_delta_float;
-        Updatecounts[stage][f][base][index]++;
       }
     // }
   }
-  __asm("nop");
 }
 
 void learning(const board_t &before, const board_t &after, int rewards)
