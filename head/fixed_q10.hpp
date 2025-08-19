@@ -17,12 +17,12 @@ struct q10 {
 
     // 丸めあり（四捨五入）
     static inline q10 from_double(double x) {
-        long long t = llround(x * Q);
+        long long t = (long long)(x * Q);
         t = std::clamp<long long>(t, INT32_MIN, INT32_MAX);
         return from_raw((int32_t)t);
     }
     static inline q10 from_float(float x) {
-        long long t = llround((double)x * Q);
+        long long t = (long long)((double)x * Q);
         t = std::clamp<long long>(t, INT32_MIN, INT32_MAX);
         return from_raw((int32_t)t);
     }
@@ -89,24 +89,20 @@ inline uint16_t frac10_raw_from_float(float x) {
 // 丸めあり（四捨五入）で double/float から Q10 の生ビット（int32）を得る
 inline int32_t q10_raw_from_double(double x) {
     long long t = llround(x * q10::Q);
-    t = std::clamp<long long>(t, (long long)INT32_MIN, (long long)INT32_MAX);
     return (int32_t)t;
 }
 inline int32_t q10_raw_from_float(float x) {
     long long t = llround((double)x * q10::Q);
-    t = std::clamp<long long>(t, (long long)INT32_MIN, (long long)INT32_MAX);
     return (int32_t)t;
 }
 
 // 丸めなし（0方向に切り捨て）で変換するバージョン
 inline int32_t q10_raw_from_double_trunc(double x) {
     long long t = (long long)(x * q10::Q);
-    t = std::clamp<long long>(t, (long long)INT32_MIN, (long long)INT32_MAX);
     return (int32_t)t;
 }
 inline int32_t q10_raw_from_float_trunc(float x) {
     long long t = (long long)((double)x * q10::Q);
-    t = std::clamp<long long>(t, (long long)INT32_MIN, (long long)INT32_MAX);
     return (int32_t)t;
 }
 

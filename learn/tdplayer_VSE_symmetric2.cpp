@@ -30,7 +30,7 @@ using namespace std;
 #define TUPLE_FILE_TYPE 6
 #endif
 
-#define MAX_TILE_VALUE 16
+#define MAX_TILE_VALUE 17
 
 #if TUPLE_FILE_TYPE == 6
   #include "../head/selected_6_tuples_sym.h"
@@ -61,32 +61,12 @@ using namespace std;
 #else
   #define UNROLL_PRAGMA(N) /* fallback: 何もしない */
 #endif
-// filter mapping: [filter][tile_value] -> mapped_value
-static int filter_mapping[NUM_SPLIT][MAX_TILE_VALUE+1];
-
-static void build_filter_mapping() {
-  UNROLL_PRAGMA(MAX_TILE_VALUE+1)
-  for (int v = 0; v <= MAX_TILE_VALUE; ++v) {
-    // first
-    if (v == 0) filter_mapping[0][v] = 0;
-    else if (v > 5) filter_mapping[0][v] = 6;
-    else filter_mapping[0][v] = v;
-    // second
-    if (v == 0) filter_mapping[1][v] = 0;
-    else if (v <= 5) filter_mapping[1][v] = 1;
-    else if (v > 9) filter_mapping[1][v] = 6;
-    else filter_mapping[1][v] = v - 4;
-    // third
-    if (v == 0) filter_mapping[2][v] = 0;
-    else if (v <= 9) filter_mapping[2][v] = 1;
-    else if (v > 13) filter_mapping[2][v] = 6;
-    else filter_mapping[2][v] = v - 8;
-    // fourth
-    if (v == 0) filter_mapping[3][v] = 0;
-    else if (v < 14) filter_mapping[3][v] = 1;
-    else filter_mapping[3][v] = v - 12;
-  }
-}
+static const uint8_t filter_mapping[4][18] = {
+  { 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
+  { 0, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6 },
+  { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6 },
+  { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5 }
+};
 
 // apply mapping to produce NUM_SPLIT filtered boards
 static inline void apply_filters_from_mapping(const board_t &board, board_t filtered_boards[NUM_SPLIT]) {
@@ -95,15 +75,13 @@ static inline void apply_filters_from_mapping(const board_t &board, board_t filt
     int f = fi/16;
     int i = fi%16; 
     int v = board[i];
-    if (v < 0) v = 0; 
-    if (v > MAX_TILE_VALUE) v = MAX_TILE_VALUE;
     filtered_boards[f][i] = filter_mapping[f][v];
   }
 }
 
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
-int Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
-int Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+float Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+float Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
 
@@ -170,8 +148,8 @@ void debugFilteredBoards(const board_t &board) {
       for (int f = 0; f < NUM_SPLIT; f++) {
         int index = 0;
         for (int k = 0; k < TUPLE_SIZE; k++) {
-          const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
-          index = index * VARIATION_TILE + tile;
+          // const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
+          index = index * VARIATION_TILE + filtered_boards[f][posSym[i][k]];
         }
         ev_filters[f] += Evs[stage][f][i%SYMMETRIC_TUPLE_NUM][index];
       }
@@ -197,14 +175,12 @@ int calcEvFiltered(const board_t &board) {
   apply_filters_from_mapping(board, filtered_boards);
   UNROLL_PRAGMA(UNROLL_COUNT)
   for (int i = 0; i < UNROLL_COUNT; i++) {
-    // for (int j = 0; j < 8; j++) {
       UNROLL_PRAGMA(NUM_SPLIT)
       for (int f = 0; f < NUM_SPLIT; f++) {
         int index = 0;
         UNROLL_PRAGMA(TUPLE_SIZE)
         for (int k = 0; k < TUPLE_SIZE; k++) {
-          const int tile = min(filtered_boards[f][posSym[i][k]], VARIATION_TILE);
-          index = index * VARIATION_TILE + tile;
+          index = index * VARIATION_TILE + filtered_boards[f][posSym[i][k]];
         }
   int base = i % NUM_TUPLE;
   int val = Evs[stage][f][base][index];
@@ -228,7 +204,7 @@ void debugBoardInfo(const board_t &board) {
 }
 
 void init_tuple() {
-  build_filter_mapping();
+  // build_filter_mapping();
   printf("TDPlayer 2 Symmetric ver.\n");
   for (int i = 0; i < NUM_TUPLE; i++) {
     printf(" %2d-th-tuples: [%2d", (i+1),tuples[i][0]);
@@ -281,12 +257,11 @@ inline int getSmallerIndex(int index)
 // 学習のための関数２
 static void learningUpdate(const board_t& before, int delta)
 {
+  __asm("nop");
   // 差分をタプル数,フィルター数で割る
   double stage_delta = q10_to_double(delta);
   stage_delta = stage_delta / (AVAIL_TUPLE * SYMMETRIC_TUPLE_NUM * NUM_SPLIT);
-  int stage_delta_int = q10_raw_from_double(stage_delta); // 1/1024単位に変換
 
-  // int stage_delta = delta;
   int stage = get_stage(before);
   
   board_t filtered_boards[NUM_SPLIT];
@@ -300,42 +275,23 @@ static void learningUpdate(const board_t& before, int delta)
         int index = 0;
         UNROLL_PRAGMA(TUPLE_SIZE)
         for (int j = 0; j < TUPLE_SIZE; j++) {
-          const int tile = min(filtered_boards[f][posSym[k][j]], VARIATION_TILE);
-          index = index * VARIATION_TILE + tile;
+          index = index * VARIATION_TILE + filtered_boards[f][posSym[k][j]];
         }
         int base = k % NUM_TUPLE;
-          // Evs[stage][f][k][index] += stage_delta;
         if (Aerrs[stage][f][base][index] == 0) {
-          Evs[stage][f][base][index] += stage_delta_int;
+          Evs[stage][f][base][index] += q10_raw_from_double(stage_delta);
         } else {
-          // 整数のみで ratio を扱い、丸めを正しく行う（浮動小数点や llround を排除）
-          // delta_add = round(stage_delta_int * (abs(Errs) / Aerrs))
-          long long err_ll = (long long)Errs[stage][f][base][index];
-          long long absErr = (err_ll >= 0) ? err_ll : -err_ll;
-          long long aerr = (long long)Aerrs[stage][f][base][index]; // >0 前提
-
-          // 分子は符号を持つ可能性がある（stage_delta_int が負のとき）
-          long long numer = (long long)stage_delta_int * absErr; // 64-bit で乗算
-          long long delta_add;
-          if (numer >= 0) {
-            delta_add = (numer + aerr/2) / aerr; // 四捨五入（正の値）
-          } else {
-            delta_add = -(( -numer + aerr/2) / aerr); // 四捨五入（負の値）
-          }
-
-          // 飽和足し込み
-          long long tmp = (long long)Evs[stage][f][base][index] + delta_add;
-          if (tmp > INT32_MAX) tmp = INT32_MAX;
-          if (tmp < INT32_MIN) tmp = INT32_MIN;
-          Evs[stage][f][base][index] = (int)tmp;
+          Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
         }
         //AerrsとErrsは小数点なし
-        Aerrs[stage][f][base][index] += fabs((stage_delta_int>>SIFT));
-        Errs[stage][f][base][index]  += (stage_delta_int>>SIFT);
+        float stage_delta_float = (float)stage_delta;
+        Aerrs[stage][f][base][index] += fabs(stage_delta_float);
+        Errs[stage][f][base][index]  += stage_delta_float;
         Updatecounts[stage][f][base][index]++;
       }
     // }
   }
+  __asm("nop");
 }
 
 void learning(const board_t &before, const board_t &after, int rewards)
