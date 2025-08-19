@@ -10,7 +10,7 @@ TUPLE_TYPE = 6
 UNAME_S := $(shell uname -s)
 
 # コンパイルフラグ
-CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head -mcmodel=large
+CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head
 LFLAGS = -pthread -std=c++20
 ifeq ($(UNAME_S),Linux)
   LFLAGS += -mcmodel=large -march=native
@@ -114,6 +114,25 @@ run-9:
 		nohup ./playgame_VSE_9 $$seed > logs/9tuple_seed$$seed.log 2>&1 & \
 	done
 	@echo "All 9-tuple runs started. Check logs/ directory for output files."
+
+# Generate assembly for inspection
+asm-tdplayer:
+	@echo "Generating assembly for tdplayer_VSE_symmetric2.cpp (TUPLE_FILE_TYPE=$(TUPLE_TYPE))"
+	@echo "Trying with -masm=intel..."
+	@if g++ -S $(CFLAGS) -masm=intel -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) \
+			tdplayer_VSE_symmetric2.cpp -o tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s 2>/dev/null; then \
+		 echo "Generated tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s (Intel syntax)"; \
+	else \
+		 echo "-masm=intel not supported by this compiler; retrying without it..."; \
+		 g++ -S $(CFLAGS) -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) \
+			tdplayer_VSE_symmetric2.cpp -o tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s; \
+		 echo "Generated tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s (AT&T syntax)"; \
+	fi
+
+asm-all:
+	@for t in 6 7 8 9; do \
+		$(MAKE) -f Makefile_VSE TUPLE_TYPE=$$t asm-tdplayer; \
+	done
 
 # 実行状況確認
 check-runs:
