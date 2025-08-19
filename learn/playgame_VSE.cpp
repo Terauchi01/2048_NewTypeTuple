@@ -118,32 +118,48 @@ void run_tdlearning(int seed)
 
       // 以下, 移動できないならwhile文を抜けて次のゲームへ
       if (!canMoves[0] && !canMoves[1] && !canMoves[2] && !canMoves[3]) {
+          // printf("gameover\n");
+          // for (int i = 0; i < 16; i++) {
+          //     printf("%2d ", board[i]);
+          //     if (i % 4 == 3) printf("\n");
+          // }
         	if (turn - restart_start < RESTART_LENGTH) {
-            // printf("restart end: %d subgames until turns", restart_count);
-            // for (int i = 0; i < restart_count; i++) { printf(" %d", restart_points[i]); } printf("\n");
+            // リスタート不可：進捗が足りない
+            printf("no restart turn %d\n", turn - restart_start);
             break;
           } else {
-            // リスタート
+            // リスタート実行
             restart_count++;
-            restart_start = (restart_start + turn) / 2;
+            int new_restart_point = (restart_start + turn) / 2;
+            printf("restart: from turn %d to turn %d (game %d)\n", turn, new_restart_point, curLoop+1);
+            
+            // stepCount更新（今回のリスタートまでのターン数を追加）
             mtx_for_loopcount.lock();
             {
-              stepCount += turn-restart_start;
+              stepCount += turn - restart_start;
             }
-            turn = restart_start;
             mtx_for_loopcount.unlock();
-            for (int d = 0; d < 4; d++) {
-                scores[d] = moveB(restart_points_board[restart_start], nextBoards[d], (enum move_dir)d);
-                canMoves[d] = (scores[d] > -1);
-                // printf("[RESTART DEBUG] d=%d, score=%d, canMove=%d\n", d, scores[d], canMoves[d]);
-                // printf("nextBoards[%d]:\n", d);
-                for (int i = 0; i < 16; i++) {
-                    printf("%2d ", nextBoards[d][i]);
-                    if (i % 4 == 3) printf("\n");
-                }
+            
+            // 状態を過去のポイントに復元
+            restart_start = new_restart_point;
+            turn = restart_start;
+            
+            // ボード状態を復元
+            for (int i = 0; i < 16; i++) {
+              board[i] = restart_points_board[restart_start][i];
             }
+            // スコアを復元
+            myScore = restart_scores[restart_start];
+            
+            // 復元したボードから次の手を計算
+            for (int d = 0; d < 4; d++) {
+                scores[d] = moveB(board, nextBoards[d], (enum move_dir)d);
+                canMoves[d] = (scores[d] > -1);
+            }
+            
+            printf("restart_executed: turn=%d, score=%d, big=%d\n", turn, myScore, biggestTile(board));
+            // リスタート後は通常フローに戻る（break しない）
           }
-          // break;
       }
 
       // プレイヤーの手選択
