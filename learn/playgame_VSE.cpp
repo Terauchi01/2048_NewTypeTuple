@@ -67,7 +67,7 @@ inline void logger(int score)
                timestr, (long long)elapsed, (long long)stepCount, steps_per_sec);
       // }
 
-      printf("statistics,%d,ave,%d,max,%d,min,%d\n", logcount, (int)(sumS / LOG_STEPS), maxS, minS);
+      printf("statistics,%d,ave,%d,max,%d,min,%d\n", logcount, (int)(sumS / logcount), maxS, minS);
       sumS = 0;
       maxS = 0;
       minS = 99999999;
