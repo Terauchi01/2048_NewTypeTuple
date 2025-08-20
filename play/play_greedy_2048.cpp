@@ -5,6 +5,7 @@
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
 #include <iostream>
@@ -89,6 +90,18 @@ int progress_calculation(int board[9]) {
   }
   return sum / 2;
 }
+int putTile2Random(const board_t &board, mt19937 &mt)
+{
+  int availablePoints[16];
+  int count = 0;
+  for (int i = 0; i < 16; i++) {
+    if (board[i] != 0) continue;
+    availablePoints[count++] = i;
+  }
+  if (count == 0) return -1;
+  std::uniform_int_distribution<int> dist(0, count - 1);
+  return availablePoints[dist(mt)];
+}
 
 // ファイル名からパラメータを抽出する構造体と関数を追加
 struct FileParams {
@@ -103,41 +116,46 @@ struct FileParams {
 
 FileParams parseFileName(const char* filename) {
   FileParams params = {0, 0, 0, 0, 0, 0, 0};
-  char basename[256];
-  strcpy(basename, filename);
+  char name[512];
+  // basename を取得
+  const char* last_slash = strrchr(filename, '/');
+  const char* base = last_slash ? last_slash + 1 : filename;
+  strncpy(name, base, sizeof(name) - 1);
+  name[sizeof(name) - 1] = '\0';
 
-  // ファイルパスから最後の'/'以降を取得
-  char* last_slash = strrchr(basename, '/');
-  char* actual_name = last_slash ? last_slash + 1 : basename;
+  // 拡張子を削除 (.zip, .dat など)
+  char* ext = strstr(name, ".zip"); if (ext) *ext = '\0';
+  ext = strstr(name, ".dat"); if (ext) *ext = '\0';
 
-  // 最初の数字を取得してNTに設定
-  params.NT = atoi(actual_name);
-
-  // .zip 拡張子を削除
-  char* ext = strstr(basename, ".zip");
-  if (ext) *ext = '\0';
-
-  // .dat 拡張子を削除
-  ext = strstr(basename, ".dat");
-  if (ext) *ext = '\0';
-
-  char* token = strtok(basename, "_");
-  while (token != NULL) {
-    if (strncmp(token, "TupleNumber", 11) == 0)
-      params.tupleNumber = atoi(token + 11);
-    else if (strncmp(token, "Multistaging", 12) == 0)
-      params.multiStaging = atoi(token + 12);
-    else if (strncmp(token, "OI", 2) == 0)
-      params.oi = atoi(token + 2);
-    else if (strncmp(token, "seed", 4) == 0)
-      params.seed = atoi(token + 4);
-    else if (strncmp(token, "c", 1) == 0)
-      params.c = atoi(token + 1);
-    else if (strncmp(token, "mini", 4) == 0)
-      params.mini = atoi(token + 4);
-
-    token = strtok(NULL, "_");
+  // キーワードに続く数字を探して設定する
+  char* p;
+  p = strstr(name, "tuples");
+  if (p) params.NT = atoi(p + strlen("tuples"));
+  p = strstr(name, "NUM_TUPLE");
+  if (p) params.tupleNumber = atoi(p + strlen("NUM_TUPLE"));
+  p = strstr(name, "TupleNumber");
+  if (p) params.tupleNumber = atoi(p + strlen("TupleNumber"));
+  p = strstr(name, "Multistaging");
+  if (p) params.multiStaging = atoi(p + strlen("Multistaging"));
+  p = strstr(name, "OI");
+  if (p) params.oi = atoi(p + strlen("OI"));
+  p = strstr(name, "seed");
+  if (p) params.seed = atoi(p + strlen("seed"));
+  p = strstr(name, "count");
+  if (p) params.c = atoi(p + strlen("count"));
+  // 旧形式で単独の 'c' が使われることがあれば検出
+  if (params.c == 0) {
+    p = strstr(name, "-c");
+    if (p) params.c = atoi(p + 2);
   }
+  p = strstr(name, "mini");
+  if (p) params.mini = atoi(p + strlen("mini"));
+
+  // 予備: もし先頭が数字だけの形式なら NT とみなす
+  if (params.NT == 0) {
+    if (isdigit((unsigned char)name[0])) params.NT = atoi(name);
+  }
+
   return params;
 }
 
@@ -218,47 +236,69 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Failed to load evaluation file: %s\n", evfile);
     exit(1);
   }
+
+  // Initialize movement lookup tables required by moveB()
+  init_movetable();
+
   // FILE* fp = fopen(evfile, "rb");
-  srand(seed);
+  // srand(seed);
+  // Use mt19937 seeded with given seed and helper lambdas for randomness
+  std::mt19937 mt(seed);
+  auto rnd_index = [&](int n) -> int { std::uniform_int_distribution<int> d(0, n - 1); return d(mt); };
+  auto rnd_chance = [&](int mod) -> int { std::uniform_int_distribution<int> d(0, mod - 1); return d(mt); };
   list<array<int, 9>> state_list;
   list<array<int, 9>> after_state_list;
   const int eval_length = 5;
   list<array<double, eval_length>> eval_list;
   list<GameOver> GameOver_list;
   // Simple greedy play using TDPlayer and game2048 core functions
+  printf("Starting game simulation with seed: %d\n", seed);
   for (int gid = 1; gid <= game_count; gid++) {
     board_t board;
     for (int i = 0; i < 16; i++) board[i] = 0;
+    int play = putTile2Random(board, mt);
+    if (play >= 0) board[play] = (rnd_chance(10) == 0) ? 2 : 1; // 4 または 2 を配置
+    // play = putTile2Random(board, mt);
+    // if (play >= 0 && board[play] == 0) board[play] = (rnd_chance(10) == 0) ? 2 : 1; // 4 または 2 を配置
+    // else if (play >= 0 && board[play] != 0) board[(play+1)%16] = (rnd_chance(10) == 0) ? 2 : 1; // 4 または 2 を配置
+    printf("Starting game %d\n", gid);
     int turn = 0;
     int game_score = 0;
 
     // place two initial tiles (like game start)
-    std::mt19937 mt(rand());
     for (int k = 0; k < 2; k++) {
       int p = -1;
       int empty[16]; int ec = 0;
       for (int i = 0; i < 16; i++) if (board[i] == 0) empty[ec++] = i;
-      if (ec > 0) p = empty[rand() % ec];
-      if (p >= 0) board[p] = (rand() % 10 == 0) ? 2 : 1;
+      if (ec > 0) p = empty[rnd_index(ec)];
+      if (p >= 0) board[p] = (rnd_chance(10) == 0) ? 2 : 1;
     }
 
     while (true) {
+      int play = putTile2Random(board, mt);
+      if (play >= 0) board[play] = (rnd_chance(10) == 0) ? 2 : 1; // 4 または 2 を配置
       turn++;
       // prepare nextBoards and scores
       alldir_bool canMoves;
       alldir_board nextBoards;
       alldir_int scores;
+      for(int i = 0;i < 16 ;i++){
+        printf(" %d", board[i]);
+        if(i % 4 == 3)printf("\n");
+      }
       for (int d = 0; d < 4; d++) {
         scores[d] = moveB(board, nextBoards[d], (enum move_dir)d);
         canMoves[d] = (scores[d] > -1);
+        // printf("score: %d\n", scores[d]);
       }
 
       // pick best move
+      int ev[4] = {0,0,0,0};
       int selected = -1; int bestv = INT_MIN;
       for (int d = 0; d < 4; d++) {
         if (!canMoves[d]) continue;
-        int ev = calcEvFiltered(nextBoards[d]) + (scores[d] << 10);
-        if (selected == -1 || ev > bestv) { selected = d; bestv = ev; }
+        ev[d] = calcEvFiltered(nextBoards[d]) + (scores[d] << 10);
+        if (selected == -1 || ev[d] > bestv) { selected = d; bestv = ev[d]; }
       }
 
       if (selected < 0) {
@@ -276,14 +316,14 @@ int main(int argc, char** argv) {
 
       // record after-state
       after_state_list.push_back(array<int,9>{board[0],board[1],board[2],board[3],board[4],board[5],board[6],board[7],board[8]});
-      eval_list.push_back(array<double, eval_length>{(double)0,0,0,0,(double)progress_calculation(board)});
+      eval_list.push_back(array<double, eval_length>{(double)ev[0],ev[1],ev[2],ev[3],(double)progress_calculation(board)});
 
       // add random tile
       int empty[16]; int ec = 0;
       for (int i = 0; i < 16; i++) if (board[i] == 0) empty[ec++] = i;
       if (ec > 0) {
-        int p = empty[rand() % ec];
-        board[p] = (rand() % 10 == 0) ? 2 : 1;
+        int p = empty[rnd_index(ec)];
+        board[p] = (rnd_chance(10) == 0) ? 2 : 1;
       }
     }
   }

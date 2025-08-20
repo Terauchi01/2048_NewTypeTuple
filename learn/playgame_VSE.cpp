@@ -12,21 +12,21 @@ using namespace std;
 #include "../head/tdplayer_VSE_symmetric2.h"
 #include "../head/util.h"
 
-#if TUPLE_FILE_TYPE == 6
-  #include "../head/selected_6_tuples_sym.h"
-  // #define DEFAULT_UNROLL_COUNT 72
-#elif TUPLE_FILE_TYPE == 7
-  #include "../head/selected_7_tuples_sym.h"
-  // #define DEFAULT_UNROLL_COUNT 64
-#elif TUPLE_FILE_TYPE == 8
-  #include "../head/selected_8_tuples_sym.h"
-  // #define DEFAULT_UNROLL_COUNT 40
-#elif TUPLE_FILE_TYPE == 9
-  #include "../head/selected_9_tuples_sym.h"
-  // #define DEFAULT_UNROLL_COUNT 56
-#else
-  #error "Invalid TUPLE_FILE_TYPE specified"
-#endif
+// #if TUPLE_FILE_TYPE == 6
+//   #include "../head/selected_6_tuples_sym.h"
+//   // #define DEFAULT_UNROLL_COUNT 72
+// #elif TUPLE_FILE_TYPE == 7
+//   #include "../head/selected_7_tuples_sym.h"
+//   // #define DEFAULT_UNROLL_COUNT 64
+// #elif TUPLE_FILE_TYPE == 8
+//   #include "../head/selected_8_tuples_sym.h"
+//   // #define DEFAULT_UNROLL_COUNT 40
+// #elif TUPLE_FILE_TYPE == 9
+//   #include "../head/selected_9_tuples_sym.h"
+//   // #define DEFAULT_UNROLL_COUNT 56
+// #else
+//   #error "Invalid TUPLE_FILE_TYPE specified"
+// #endif
 
 int putTile2Random(const board_t &board, mt19937 &mt);
 // #define NUM_GAMES 100000000
