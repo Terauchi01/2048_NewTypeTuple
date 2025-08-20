@@ -98,7 +98,7 @@ static inline void apply_filters_from_mapping(const board_t &board, board_t filt
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 float Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 float Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
-// int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
 
 //#include "selected_7_tuples.h"
@@ -112,7 +112,20 @@ void output_ev(int seed,int suffix) {
   
   sprintf(filename, "dat/tuples%d-NUM_TUPLE%d-seed%d-VSE-count%d.dat", TUPLE_SIZE, NUM_TUPLE, seed,suffix);
   fp = fopen(filename, "wb");
-  fwrite(Evs, sizeof(int)*ARRAY_LENGTH, NUM_STAGES*NUM_SPLIT*NUM_TUPLE, fp);
+  int Evs_save[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+  for (int s = 0; s < NUM_STAGES; s++) {
+    for (int f = 0; f < NUM_SPLIT; f++) {
+      for (int t = 0; t < NUM_TUPLE; t++) {
+        for (int a = 0; a < ARRAY_LENGTH; a++) {
+          if(Errs[s][f][t][a] / Aerrs[s][f][t][a] < 0.1) {
+            printf("Updatecounts[%d][%d][%d][%d] = %d\n", s, f, t, a, Updatecounts[s][f][t][a]);
+            Evs_save[s][f][t][a] = Evs[s][f][t][a];
+          }
+        }
+      }
+    }
+  }
+  fwrite(Evs_save, sizeof(int)*ARRAY_LENGTH, NUM_STAGES*NUM_SPLIT*NUM_TUPLE, fp);
   fclose(fp);
 
 }
@@ -234,7 +247,7 @@ void init_tuple() {
   fill_n(&Evs[0][0][0][0], EvsCount, (EV_INIT_VALUE * n));
   fill_n(&Errs[0][0][0][0], EvsCount, 0);
   fill_n(&Aerrs[0][0][0][0], EvsCount, 0);
-  // fill_n(&Updatecounts[0][0][0][0], EvsCount, 0);
+  fill_n(&Updatecounts[0][0][0][0], EvsCount, 0);
 }
 
 inline int min(int a, int b) {
@@ -302,6 +315,7 @@ static void learningUpdate(const board_t& before, int delta)
         float stage_delta_float = (float)stage_delta;
         Aerrs[stage][f][base][index] += fabs(stage_delta_float);
         Errs[stage][f][base][index]  += stage_delta_float;
+        Updatecounts[stage][f][base][index] += 1;
       }
     // }
   }

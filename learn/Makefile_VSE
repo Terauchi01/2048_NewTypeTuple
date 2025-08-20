@@ -9,6 +9,13 @@ TUPLE_TYPE = 6
 # Detect OS name for conditional flags
 UNAME_S := $(shell uname -s)
 
+# コンパイラの選択：macOSではclang++、LinuxではG++
+ifeq ($(UNAME_S),Darwin)
+  CXX = clang++
+else
+  CXX = g++
+endif
+
 # コンパイルフラグ
 CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head
 LFLAGS = -pthread -std=c++20
@@ -18,13 +25,13 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 $(TARGET): game2048_VSE.o tdplayer_VSE_symmetric.o symmetric.o
-	g++ $(LFLAGS) -o $@ $+
+	$(CXX) $(LFLAGS) -o $@ $+
 
 $(LEARN_TARGET): playgame_VSE.o tdplayer_VSE_symmetric.o symmetric.o game2048.o
-	g++ $(LFLAGS) -o $@ $+
+	$(CXX) $(LFLAGS) -o $@ $+
 
 %.o:%.cpp
-	g++ $(CFLAGS) -c $<
+	$(CXX) $(CFLAGS) -c $<
 
 # 依存関係
 game2048_VSE.o: game2048_VSE.cpp ../head/game2048.h
@@ -45,35 +52,35 @@ learn: $(LEARN_TARGET)
 # 異なるタプルファイルでビルド
 build-6:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 clean
-	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=6
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=6
-	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=6
-	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=6
-	g++ $(LFLAGS) -o playgame_VSE_6 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(CXX) $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=6
+	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=6
+	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=6
+	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=6
+	$(CXX) $(LFLAGS) -o playgame_VSE_6 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 build-7:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=7 clean
-	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=7
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=7
-	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=7
-	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=7
-	g++ $(LFLAGS) -o playgame_VSE_7 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(CXX) $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=7
+	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=7
+	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=7
+	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=7
+	$(CXX) $(LFLAGS) -o playgame_VSE_7 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 build-8:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=8 clean
-	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=8
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=8
-	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=8
-	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=8
-	g++ $(LFLAGS) -o playgame_VSE_8 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(CXX) $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=8
+	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=8
+	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=8
+	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=8
+	$(CXX) $(LFLAGS) -o playgame_VSE_8 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 build-9:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=9 clean
-	g++ $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=9
-	g++ $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=9
-	g++ $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=9
-	g++ $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=9
-	g++ $(LFLAGS) -o playgame_VSE_9 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(CXX) $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=9
+	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=9
+	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=9
+	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=9
+	$(CXX) $(LFLAGS) -o playgame_VSE_9 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
 
 # 異なるタプルファイルでビルドして実行（seed 0~9）
 run-6:
@@ -120,12 +127,12 @@ run-9:
 asm-tdplayer:
 	@echo "Generating assembly for tdplayer_VSE_symmetric2.cpp (TUPLE_FILE_TYPE=$(TUPLE_TYPE))"
 	@echo "Trying with -masm=intel..."
-	@if g++ -S $(CFLAGS) -masm=intel -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) \
+	@if $(CXX) -S $(CFLAGS) -masm=intel -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) \
 			tdplayer_VSE_symmetric2.cpp -o tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s 2>/dev/null; then \
 		 echo "Generated tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s (Intel syntax)"; \
 	else \
 		 echo "-masm=intel not supported by this compiler; retrying without it..."; \
-		 g++ -S $(CFLAGS) -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) \
+		 $(CXX) -S $(CFLAGS) -DTUPLE_FILE_TYPE=$(TUPLE_TYPE) \
 			tdplayer_VSE_symmetric2.cpp -o tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s; \
 		 echo "Generated tdplayer_VSE_symmetric2_T$(TUPLE_TYPE).s (AT&T syntax)"; \
 	fi

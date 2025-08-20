@@ -18,7 +18,7 @@ int putTile2Random(const board_t &board, mt19937 &mt);
 #define NUM_STEPS 200000000000
 // #define NUM_STEPS 200
 #define LOGCOUNT 10000
-#define EVOUTPUT 10000000
+#define EVOUTPUT 10000000000
 #define NUM_THREADS 3
 #define RESTART_LENGTH 128
 int loopCount = 0;
@@ -68,8 +68,8 @@ inline void logger(int score)
       maxS = 0;
       minS = 99999999;
     }
-    if (logcount % EVOUTPUT == 0) {
-      output_ev(seed, logcount / EVOUTPUT);
+    if (stepCount % EVOUTPUT == 0) {
+      output_ev(seed, stepCount / EVOUTPUT);
     }
   }
   mtx_for_logger.unlock();
