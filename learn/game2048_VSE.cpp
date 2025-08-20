@@ -139,7 +139,7 @@ int moveB(const board_t orgBoard, board_t newBoard, enum move_dir dir) {
 }
 
 /** test code */
-#if 1
+#if 0
 // tdplayer_VSE_symmetric.cppで定義されている関数の外部宣言
 extern void init_tuple(char** argv);
 extern void debugBoardInfo(const board_t &board);
