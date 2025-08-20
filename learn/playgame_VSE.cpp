@@ -24,6 +24,7 @@ int putTile2Random(const board_t &board, mt19937 &mt);
 int loopCount = 0;
 int seed = 0;
 long long stepCount = 0;
+bool save_flg = 0;
 
 mutex mtx_for_loopcount;
 mutex mtx_for_logger;
@@ -68,8 +69,9 @@ inline void logger(int score)
       maxS = 0;
       minS = 99999999;
     }
-    if (stepCount % EVOUTPUT == 0) {
+    if (save_flg) {
       output_ev(seed, stepCount / EVOUTPUT);
+      save_flg = 0;
     }
   }
   mtx_for_logger.unlock();
@@ -136,7 +138,12 @@ void run_tdlearning(int seed)
           // ターン（学習回数）をカウント
           mtx_for_loopcount.lock();
           {
+            long long prev_stepCount = stepCount;
             stepCount += turn-restart_start;
+            // EVOUTPUT間隔で保存フラグを設定（境界をまたいだ場合）
+            if ((prev_stepCount / EVOUTPUT) < (stepCount / EVOUTPUT)) {
+              save_flg = 1;
+            }
           }
           mtx_for_loopcount.unlock();
 	  if (turn - restart_start < RESTART_LENGTH) {

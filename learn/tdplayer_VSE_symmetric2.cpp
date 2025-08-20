@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <random>
+#include <cstring>
 using namespace std;
 #include "../head/game2048.h"
 #include "../head/symmetric.h"
@@ -99,6 +100,7 @@ int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 float Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 float Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+// int Evs_save[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
 
 //#include "selected_7_tuples.h"
@@ -106,28 +108,41 @@ int pos[NUM_TUPLE][TUPLE_SIZE];
 void output_ev(int seed,int suffix) {
   char filename[1024];
   FILE *fp;
-  
-  // datディレクトリを作成（既に存在する場合は何もしない）
+
   system("mkdir -p dat");
-  
-  sprintf(filename, "dat/tuples%d-NUM_TUPLE%d-seed%d-VSE-count%d.dat", TUPLE_SIZE, NUM_TUPLE, seed,suffix);
+  sprintf(filename, "dat/tuples%d-NUM_TUPLE%d-seed%d-VSE-count%d.dat", TUPLE_SIZE, NUM_TUPLE, seed, suffix);
   fp = fopen(filename, "wb");
-  int Evs_save[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+  if (!fp) { perror("fopen"); return; }
+
+  // タプルごとに ARRAY_LENGTH 個を書き出す（Evs_save を使わない）
+  // 注意: ARRAY_LENGTH が大きければ動的確保にする
+  int *buf = (int*)malloc(sizeof(int) * ARRAY_LENGTH);
+  if (!buf) { fclose(fp); return; }
+
   for (int s = 0; s < NUM_STAGES; s++) {
     for (int f = 0; f < NUM_SPLIT; f++) {
       for (int t = 0; t < NUM_TUPLE; t++) {
+        // まずゼロで初期化（元コードの未設定エントリは 0 だった想定）
+        memset(buf, 0, sizeof(int) * ARRAY_LENGTH);
+
         for (int a = 0; a < ARRAY_LENGTH; a++) {
-          if(Errs[s][f][t][a] / Aerrs[s][f][t][a] < 0.1) {
-            printf("Updatecounts[%d][%d][%d][%d] = %d\n", s, f, t, a, Updatecounts[s][f][t][a]);
-            Evs_save[s][f][t][a] = Evs[s][f][t][a];
-          }
+          // Aerrs が 0 のときはチェックして除算を避ける
+            buf[a] = Evs[s][f][t][a] * (Updatecounts[s][f][t][a]/200.0f)+(-EV_INIT)*(1-Updatecounts[s][f][t][a]/200.0f);
+        }
+
+        size_t written = fwrite(buf, sizeof(int), ARRAY_LENGTH, fp);
+        if (written != (size_t)ARRAY_LENGTH) {
+          perror("fwrite");
+          free(buf);
+          fclose(fp);
+          return;
         }
       }
     }
   }
-  fwrite(Evs_save, sizeof(int)*ARRAY_LENGTH, NUM_STAGES*NUM_SPLIT*NUM_TUPLE, fp);
-  fclose(fp);
 
+  free(buf);
+  fclose(fp);
 }
 
 // ステージ判定関数：STAGE_THRESHOLD以上の値があるかでステージを決定
@@ -315,7 +330,7 @@ static void learningUpdate(const board_t& before, int delta)
         float stage_delta_float = (float)stage_delta;
         Aerrs[stage][f][base][index] += fabs(stage_delta_float);
         Errs[stage][f][base][index]  += stage_delta_float;
-        Updatecounts[stage][f][base][index] += 1;
+        Updatecounts[stage][f][base][index] = min(200,Updatecounts[stage][f][base][index]+1);
       }
     // }
   }
