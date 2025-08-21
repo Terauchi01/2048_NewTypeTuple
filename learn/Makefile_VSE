@@ -1,4 +1,4 @@
-.phony: clean test help learn build-6 build-7 build-8 build-9 learn-6 learn-7 learn-8 learn-9 run-6 run-7 run-8 run-9 check-runs clean-logs stop-runs
+.phony: clean test help learn build-0 build-6 build-7 build-8 build-9 learn-6 learn-7 learn-8 learn-9 run-6 run-7 run-8 run-9 check-runs clean-logs stop-runs
 
 TARGET = game2048_VSE
 LEARN_TARGET = playgame_VSE
@@ -50,6 +50,14 @@ learn: $(LEARN_TARGET)
 	./$(LEARN_TARGET) 123
 
 # 異なるタプルファイルでビルド
+build-0:
+	$(MAKE) -f Makefile_VSE TUPLE_TYPE=0 clean
+	$(CXX) $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(LFLAGS) -o playgame_VSE_0 playgame_VSE.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+
 build-6:
 	$(MAKE) -f Makefile_VSE TUPLE_TYPE=6 clean
 	$(CXX) $(CFLAGS) -c playgame_VSE.cpp -DTUPLE_FILE_TYPE=6
