@@ -1,4 +1,4 @@
-.phony: clean test help learn build-6 build-7 build-8 build-9 learn-6 learn-7 learn-8 learn-9 run-6 run-7 run-8 run-9 check-runs clean-logs stop-runs
+.phony: clean test help learn build-0 build-6 build-7 build-8 build-9 learn-6 learn-7 learn-8 learn-9 run-6 run-7 run-8 run-9 check-runs clean-logs stop-runs
 
 # Detect OS name for conditional flags
 UNAME_S := $(shell uname -s)
@@ -35,6 +35,13 @@ playgame_VSE.o: playgame_VSE.cpp ../head/game2048.h ../head/symmetric.h ../head/
 game2048.o: game2048.cpp ../head/game2048.h
 
 # 異なるタプルファイルでビルド
+build-0
+	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=0
+	$(CXX) $(LFLAGS) -o test_expectimax_0 test_expectimax.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+
 build-6:
 	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=6
 	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=6
