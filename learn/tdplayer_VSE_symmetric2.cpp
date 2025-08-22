@@ -12,6 +12,7 @@ using namespace std;
 
 #define NUM_STAGES 2
 #define EV_INIT 320000
+#define UC_CLIP 10
 #define SIFT 10
 
 // ステージ判定用閾値（この値以上の数字があるかでステージを決定）
@@ -116,7 +117,7 @@ void output_ev(int seed,int suffix) {
   FILE *fp;
 
   system("mkdir -p dat");
-  sprintf(filename, "dat/tuples%d-NUM_TUPLE%d-seed%d-VSE-count%d.dat", TUPLE_SIZE, NUM_TUPLE, seed, suffix);
+  sprintf(filename, "dat/tuples%d-seed%d-VSE-count%03d.dat", TUPLE_FILE_TYPE, seed, suffix);
   fp = fopen(filename, "wb");
   if (!fp) { perror("fopen"); return; }
 
@@ -133,7 +134,7 @@ void output_ev(int seed,int suffix) {
 
         for (int a = 0; a < ARRAY_LENGTH; a++) {
           // Aerrs が 0 のときはチェックして除算を避ける
-            buf[a] = Evs[s][f][t][a] * (Updatecounts[s][f][t][a]/200.0f)+(-EV_INIT)*(1-Updatecounts[s][f][t][a]/200.0f);
+	  buf[a] = Evs[s][f][t][a] * Updatecounts[s][f][t][a]/(UC_CLIP)+(-EV_INIT)*(UC_CLIP-Updatecounts[s][f][t][a])/UC_CLIP;
         }
 
         size_t written = fwrite(buf, sizeof(int), ARRAY_LENGTH, fp);
@@ -336,7 +337,7 @@ static void learningUpdate(const board_t& before, int delta)
         float stage_delta_float = (float)stage_delta;
         Aerrs[stage][f][base][index] += fabs(stage_delta_float);
         Errs[stage][f][base][index]  += stage_delta_float;
-        Updatecounts[stage][f][base][index] = min(200,Updatecounts[stage][f][base][index]+1);
+        Updatecounts[stage][f][base][index] = min(UC_CLIP,Updatecounts[stage][f][base][index]+1);
       }
     // }
   }
@@ -369,6 +370,7 @@ void learningLast(const board_t &before)
 void TDPlayer::gameStart()
 {
   firstTurn = true;
+  train_count = 0;
 }
 
 enum move_dir TDPlayer::selectHand(const board_t &/* board */,
@@ -411,19 +413,28 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
   if (selected < 0 || selected >= 4) {
     printf("OUTOFRANGE: selected = %d\n", selected);
   }
-  
-  // 一手目以外は学習
-  if (firstTurn) {
-    firstTurn = false;
-  } else {
-    learning(lastBoard, nextBoards[selected], scores[selected]);
-  }
 
-  // lastBoardを更新
   UNROLL_PRAGMA(16)
-  for (int i = 0; i < 16; i++) {
-    lastBoard[i] = nextBoards[selected][i];
-  }
+    for (int i = 0; i < 16; i++) {
+      train_after[train_count][i] = nextBoards[selected][i];
+    }
+  train_score[train_count++] = scores[selected];
+  // // 一手目以外は学習
+  // if (firstTurn) {
+  //   firstTurn = false;
+  // } else {
+  //   UNROLL_PRAGMA(16) for (int i = 0; i < 16; i++) train_before[train_count][i] = lastBoard[i];
+  //   UNROLL_PRAGMA(16) for (int i = 0; i < 16; i++) train_after[train_count][i] = nextBoards[selected][i];
+  //   train_score[train_count] = scores[selected];
+  //   train_count++;
+  //   // learning(lastBoard, nextBoards[selected], scores[selected]);
+  // }
+
+  // // lastBoardを更新
+  // UNROLL_PRAGMA(16)
+  // for (int i = 0; i < 16; i++) {
+  //   lastBoard[i] = nextBoards[selected][i];
+  // }
 
   return (enum move_dir)selected;
   
@@ -431,5 +442,14 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
 
 void TDPlayer::gameEnd()
 {
-  learningLast(lastBoard);
+  // learningLast(lastBoard);
+
+  // for (int i = train_count; i > 0; i--) {
+  //   learning(train_before[i-1], train_after[i-1], train_score[i-1]);
+  // }
+  // train_count = 0;
+  learningLast(train_after[--train_count]);
+  for (; train_count > 0; --train_count) {
+    learning(train_after[train_count - 1], train_after[train_count], train_score[train_count - 1]);
+  }
 }

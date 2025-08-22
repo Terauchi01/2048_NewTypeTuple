@@ -14,7 +14,7 @@ using namespace std;
 #include "../head/util.h"
 
 int putTile2Random(const board_t &board, mt19937 &mt);
-#define NUM_THREADS 1
+#define NUM_THREADS 5
 int seed = 0;
 mutex mtx_for_logger;
 
@@ -54,6 +54,7 @@ void run_test_expectimax(int search_depth, int seed_start, int seed_end)
 	  mtx_for_logger.lock();
 	  {
 	    printf("game,%d,sco,%d,big,%d,turn,%d\n", game_seed, myScore, biggestTile(board), turn);
+	    fflush(stdout);
 	  }
           mtx_for_logger.unlock();
 	  break;
@@ -86,7 +87,6 @@ int main(int argc, char** argv)
 
   init_movetable();
   input_ev(filename);
-  printf("initialization finished\n");
 
   std::vector<std::thread> ths;
   for (int i = 0; i < NUM_THREADS; i++) {

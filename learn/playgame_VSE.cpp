@@ -35,7 +35,7 @@ int putTile2Random(const board_t &board, mt19937 &mt);
 // #define NUM_STEPS 200
 // #define LOGCOUNT 10000
 #define LOG_STEPS 1000000000
-#define NUM_THREADS 3
+#define NUM_THREADS 10
 #define RESTART_LENGTH 128
 int loopCount = 0;
 int seed = 0;
@@ -87,6 +87,7 @@ inline void logger(int score)
       sumS = 0;
       maxS = 0;
       minS = 99999999;
+      logcount = 0;
       output_ev(seed, lastlog);
     }
   }

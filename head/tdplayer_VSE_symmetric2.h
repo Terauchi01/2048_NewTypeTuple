@@ -13,7 +13,17 @@ void output_ev(int seed, int suffix);
 void input_ev(const char* filename);
 
 class TDPlayer {
+  int train_count;
+  board_t* train_before;
+  board_t* train_after;
+  int* train_score;
 public:
+  TDPlayer() {
+    train_before = new board_t[100000];
+    train_after = new board_t[100000];
+    train_score = new int[100000];
+  }
+  
   board_t lastBoard;
   bool firstTurn;
 
