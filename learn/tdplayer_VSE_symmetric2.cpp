@@ -14,6 +14,7 @@ using namespace std;
 #define EV_INIT 320000
 #define UC_CLIP 10
 #define SIFT 10
+#define ALPHA 0.5
 
 // ステージ判定用閾値（この値以上の数字があるかでステージを決定）
 #define STAGE_THRESHOLD 14
@@ -328,15 +329,15 @@ static void learningUpdate(const board_t& before, int delta)
           index = index * VARIATION_TILE + filtered_boards[f][posSym[k][j]];
         }
         int base = k % NUM_TUPLE;
-        if (Aerrs[stage][f][base][index] == 0) {
-          Evs[stage][f][base][index] += q10_raw_from_double(stage_delta);
-        } else {
-          Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
-        }
-        //AerrsとErrsは小数点なし
         float stage_delta_float = (float)stage_delta;
-        Aerrs[stage][f][base][index] += fabs(stage_delta_float);
+        Aerrs[stage][f][base][index] += fabs(stage_delta_float) + 0.1; // 0.1を足して下の0チェックを回避
         Errs[stage][f][base][index]  += stage_delta_float;
+        // if (Aerrs[stage][f][base][index] == 0) {
+        //   Evs[stage][f][base][index] += q10_raw_from_double(stage_delta * ALPHA);
+        // } else {
+          Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta *  * ALPHA * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
+        // }
+        //AerrsとErrsは小数点なし
         Updatecounts[stage][f][base][index] = min(UC_CLIP,Updatecounts[stage][f][base][index]+1);
       }
     // }
