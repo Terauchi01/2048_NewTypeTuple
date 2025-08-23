@@ -335,7 +335,7 @@ static void learningUpdate(const board_t& before, int delta)
         // if (Aerrs[stage][f][base][index] == 0) {
         //   Evs[stage][f][base][index] += q10_raw_from_double(stage_delta * ALPHA);
         // } else {
-          Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta *  * ALPHA * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
+          Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta *  ALPHA * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
         // }
         //AerrsとErrsは小数点なし
         Updatecounts[stage][f][base][index] = min(UC_CLIP,Updatecounts[stage][f][base][index]+1);
