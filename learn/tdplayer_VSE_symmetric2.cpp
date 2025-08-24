@@ -14,7 +14,8 @@ using namespace std;
 #define EV_INIT 320000
 #define UC_CLIP 10
 #define SIFT 10
-#define ALPHA 0.5
+// #define ALPHA 0.5
+extern double ALPHA;
 
 // ステージ判定用閾値（この値以上の数字があるかでステージを決定）
 #define STAGE_THRESHOLD 14
@@ -105,8 +106,8 @@ static inline void apply_filters_from_mapping(const board_t &board, board_t filt
 }
 
 int Evs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
-float Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
-float Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+// float Errs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
+// float Aerrs[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int Updatecounts[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 // int Evs_save[NUM_STAGES][NUM_SPLIT][NUM_TUPLE][ARRAY_LENGTH];
 int pos[NUM_TUPLE][TUPLE_SIZE];
@@ -268,8 +269,8 @@ void init_tuple() {
   int n = 1;
   n <<= SIFT;
   fill_n(&Evs[0][0][0][0], EvsCount, (EV_INIT_VALUE * n));
-  fill_n(&Errs[0][0][0][0], EvsCount, 0);
-  fill_n(&Aerrs[0][0][0][0], EvsCount, 0);
+  // fill_n(&Errs[0][0][0][0], EvsCount, 0);
+  // fill_n(&Aerrs[0][0][0][0], EvsCount, 0);
   fill_n(&Updatecounts[0][0][0][0], EvsCount, 0);
 }
 
@@ -309,6 +310,7 @@ inline int getSmallerIndex(int index)
 // 学習のための関数２
 static void learningUpdate(const board_t& before, int delta)
 {
+  double alpha = ALPHA;
   // 差分をタプル数,フィルター数で割る
   double stage_delta = q10_to_double(delta);
   stage_delta = stage_delta / (AVAIL_TUPLE * SYMMETRIC_TUPLE_NUM * NUM_SPLIT);
@@ -329,13 +331,15 @@ static void learningUpdate(const board_t& before, int delta)
           index = index * VARIATION_TILE + filtered_boards[f][posSym[k][j]];
         }
         int base = k % NUM_TUPLE;
-        float stage_delta_float = (float)stage_delta;
-        Aerrs[stage][f][base][index] += fabs(stage_delta_float) + 0.1; // 0.1を足して下の0チェックを回避
-        Errs[stage][f][base][index]  += stage_delta_float;
+        // float stage_delta_float = (float)stage_delta;
+        // Aerrs[stage][f][base][index] += fabs(stage_delta_float) + 0.1; // 0.1を足して下の0チェックを回避
+        // Errs[stage][f][base][index]  += stage_delta_float;
         // if (Aerrs[stage][f][base][index] == 0) {
         //   Evs[stage][f][base][index] += q10_raw_from_double(stage_delta * ALPHA);
         // } else {
-          Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta *  ALPHA * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
+          // Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta *  ALPHA * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
+	  Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta * alpha);
+
         // }
         //AerrsとErrsは小数点なし
         Updatecounts[stage][f][base][index] = min(UC_CLIP,Updatecounts[stage][f][base][index]+1);
@@ -415,27 +419,27 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
     printf("OUTOFRANGE: selected = %d\n", selected);
   }
 
-  UNROLL_PRAGMA(16)
-    for (int i = 0; i < 16; i++) {
-      train_after[train_count][i] = nextBoards[selected][i];
-    }
-  train_score[train_count++] = scores[selected];
-  // // 一手目以外は学習
-  // if (firstTurn) {
-  //   firstTurn = false;
-  // } else {
-  //   UNROLL_PRAGMA(16) for (int i = 0; i < 16; i++) train_before[train_count][i] = lastBoard[i];
-  //   UNROLL_PRAGMA(16) for (int i = 0; i < 16; i++) train_after[train_count][i] = nextBoards[selected][i];
-  //   train_score[train_count] = scores[selected];
-  //   train_count++;
-  //   // learning(lastBoard, nextBoards[selected], scores[selected]);
-  // }
-
-  // // lastBoardを更新
   // UNROLL_PRAGMA(16)
-  // for (int i = 0; i < 16; i++) {
-  //   lastBoard[i] = nextBoards[selected][i];
-  // }
+  //   for (int i = 0; i < 16; i++) {
+  //     train_after[train_count][i] = nextBoards[selected][i];
+  //   }
+  // train_score[train_count++] = scores[selected];
+  // 一手目以外は学習
+  if (firstTurn) {
+    firstTurn = false;
+  } else {
+    // UNROLL_PRAGMA(16) for (int i = 0; i < 16; i++) train_before[train_count][i] = lastBoard[i];
+    // UNROLL_PRAGMA(16) for (int i = 0; i < 16; i++) train_after[train_count][i] = nextBoards[selected][i];
+    // train_score[train_count] = scores[selected];
+    // train_count++;
+    learning(lastBoard, nextBoards[selected], scores[selected]);
+  }
+
+  // lastBoardを更新
+  UNROLL_PRAGMA(16)
+  for (int i = 0; i < 16; i++) {
+    lastBoard[i] = nextBoards[selected][i];
+  }
 
   return (enum move_dir)selected;
   
@@ -443,14 +447,14 @@ enum move_dir TDPlayer::selectHand(const board_t &/* board */,
 
 void TDPlayer::gameEnd()
 {
-  // learningLast(lastBoard);
+  learningLast(lastBoard);
 
   // for (int i = train_count; i > 0; i--) {
   //   learning(train_before[i-1], train_after[i-1], train_score[i-1]);
   // }
   // train_count = 0;
-  learningLast(train_after[--train_count]);
-  for (; train_count > 0; --train_count) {
-    learning(train_after[train_count - 1], train_after[train_count], train_score[train_count - 1]);
-  }
+  // learningLast(train_after[--train_count]);
+  // for (; train_count > 0; --train_count) {
+  //   learning(train_after[train_count - 1], train_after[train_count], train_score[train_count - 1]);
+  // }
 }

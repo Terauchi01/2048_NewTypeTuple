@@ -35,7 +35,7 @@ playgame_VSE.o: playgame_VSE.cpp ../head/game2048.h ../head/symmetric.h ../head/
 game2048.o: game2048.cpp ../head/game2048.h
 
 # 異なるタプルファイルでビルド
-build-0
+build-0:
 	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=0
 	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=0
 	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=0

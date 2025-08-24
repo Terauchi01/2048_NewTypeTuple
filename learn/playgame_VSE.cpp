@@ -43,6 +43,8 @@ long long stepCount = 0;
 // bool save_flg = 0;
 int lastlog = 0;
 
+double ALPHA = 0.1;
+
 mutex mtx_for_loopcount;
 mutex mtx_for_logger;
 
@@ -65,6 +67,7 @@ inline void logger(int score)
 
     // 前回記録したログ区間の商を比較する（剰余では初期時に誤動作する）
     if ((stepCount / LOG_STEPS) > lastlog) {
+      ALPHA *= 0.97;
       lastlog = stepCount / LOG_STEPS;
       // 10000区切りのときに現在時刻と経過時間、累積ターン数、平均ターン/秒を出力
       // if(logcount % 10000 == 0 || logcount == 1){
