@@ -2,7 +2,8 @@
 % LLNCS macro package for Springer Computer Science proceedings;
 % Version 2.21 of 2022/01/12
 %
-\documentclass[runningheads]{llncs}
+% \documentclass[runningheads]{llncs}
+\documentclass[runningheads,dvipdfmx]{llncs}
 %
 \usepackage[T1]{fontenc}
 % T1 fonts will be used to generate the final print and online PDFs,
@@ -18,6 +19,8 @@
 %\usepackage{color}
 %\renewcommand\UrlFont{\color{blue}\rmfamily}
 %\urlstyle{rm}
+\usepackage{array}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
 %
 \begin{document}
 %
@@ -56,6 +59,7 @@ The abstract should briefly summarize the contents of the paper in
 \input{introduction}
 \input{2048}
 \input{player}
+\input{NTuple}
 \input{experiments}
 \input{consideration}
 \input{conclusion}
