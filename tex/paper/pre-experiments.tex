@@ -1,0 +1,78 @@
+\section{Preliminary Experiments on Mini2048}
+
+% VSE を行うことで性能がどのくらい下がりうるのか，どのように value ranges を設計すればよいかについて
+% 知見を得るため，まず 3x3 の mini2048 を用いて評価を行った．
+% mini2048 は，3x3 の盤面で行われること以外は2048と同じである．
+% すでに完全解析されており，理論的な最高期待値は5469？点だと分かっている．
+% 著者らの先行研究において，様々な大きさのN-tupleを設計・実験し，盤面の半分以上をカバーする7タプルまで性能向上が見られることを示した．
+
+We first conducted evaluations of VSE using mini2048, a smaller variant of 2048, to gain insights of how much the application of VSE degrates the performance and of which proporties of value ranges affect the preformance.
+Mini2048 is a smaller variant of 2048 where the game rules are identical to 2048 except for the board size being $3\times 3$.
+We chose Mini2048 as the testbed of our preliminary experiments for two reasons: it was strongly solved (a.k.a. perfectly analized) and the expected score of the optimal play is known to be 5469; we confirmed in our previous work that enlarging the size of N-tuple yielded better performance up to 6-tuples (each 6-tuple samples from two-thirds of the board).
+
+% 実験では，m-NT6 を例にとり，複数の value ranges の組合せによる VSE を行ったときのプレイヤの性能を調べる．
+% ここでは，最大3つに分割する VSE を複数試す．ここで調べたいことは以下の3つである．
+%  - VSE を行うことで，どのくらいの性能低下がありうるか．
+%  - 分割にあたって，複数の分割に含まれるバッファを持たせるべきか．
+%  - VSE を行ったときに，性能に最も影響する要素は何か．
+
+In the preliminary experiments, we used two manually designed N-tuple networks in Table~\ref{table:mNT}: two 6-tuples (namely, \textsf{mNT6}) and three 4-tuples (namely, \textsf{mNT4}). For \textsf{mNT6}, we applied multiple VSEs that split the value ranges up to three parts.
+The main questions we wished to examine were the following:
+\begin{itemize}
+ \item To what extent does VSE degrade the performance?
+ \item Should we have operlaps between value ranges when splitting?
+ \item Which factor of VSE affects the performance most strongly?
+\end{itemize}
+
+
+% 比較として，VSE を行わない m-NT4 の結果も示す．
+% 学習は，OI=1200 で初期化したTC学習とし，$5\times10^8$ steps だけ学習させる．
+% 10個の異なるseedsを用いた学習から得られる10個のプレイヤにgreedy に？？ゲームプレイさせたときの平均得点を調べる．
+
+For each configuration, we trained N-tuple networks using Temporal Coherence learning with optmistic initialization (initial value 1200) for $5\times 10^8$ steps.  After the training, we played 1000?? games with 1-ply lookahead (the greedy play), and evaluate the performance in terms of the average score.  To mitigate the effect of randomness, we conducted each training with 10 different random seeds.
+Table~\ref{table:pre-results} summarizes the configuratons of VSE and the average score of the trained N-tuple networks.
+
+\begin{table}
+ \caption{N-tuple networks used for mini2048.}
+ \label{table:mNT}
+ \centering\includegraphics[]{figures/mNT-table.pdf}
+\end{table}
+
+\begin{table}
+\caption{Configurations of preliminary experiments for mini2048 and the average score for 1000 games with 1-ply lookahead (the numbers after $\pm$ show standard deviation over 10 training runs).}
+\label{table:pre-results}
+ \small\begin{tabular}{l|l|l|r|r}
+  \hline\hline
+   tuple & VSE & value ranges & weights & ave. score \\
+  \hline
+% (* 11 11 11 11 11 11 1 2)3543122
+   \multirow{5}{*}{mNT6}	& \mbox{no VSE}		& [0,\,1,\,2,\,3,\,4,\,5,\,6,\,7,\,8,\,9,\,10]				& 3\,543\,122	& 4\,000$\pm$128 \\ \cline{2-5}
+% (* 8 8 8 8 8 8 2 2)1048576
+				& \mbox{2-VSE-A}	& [0,\,1,\,2,\,3,\,4,\,5,\,6,\,L] + [0,\,S,\,5,\,6,\,7,\,8,\,9,\,10]		& 1\,048\,576	& \\ \cline{2-5}
+% (+ (* 8 8 8 8 8 8 1 2) (* 6 6 6 6 6 6 1 2))617600
+				& \mbox{2-VSE-B}	& [0,\,1,\,2,\,3,\,4,\,5,\,6,\,L] + [0,\,S,\,7,\,8,\,9,\,10]		& 617\,600	& \\ \cline{2-5}
+% (+ (* 7 7 7 7 7 7 2 2))470596
+				& \mbox{2-VSE-C}	& [0,\,1,\,2,\,3,\,4,\,5,\,L] + [0,\,S,\,6,\,7,\,8,\,9,\,10]		& 470\,596	& \\ \cline{2-5}
+% (+ (* 6 6 6 6 6 6 1 2) (* 8 8 8 8 8 8 1 2))617600
+				& \mbox{2-VSE-D}	& [0,\,1,\,2,\,3,\,4,\,L] + [0,\,S,\,5,\,6,\,7,\,8,\,9,\,10]		& 617\,600	& \\ \cline{2-5}
+% (+ (* 6 6 6 6 6 6 2 2) (* 5 5 5 5 5 5 1 2))217874
+				& \mbox{3-VSE-A}	& [0,\,1,\,2,\,3,\,4,\,L] + [0,\,S,\,5,\,6,\,7,\,L] + [0,\,S,\,8,\,9,\,10]	& 217\,874	& \\ \hline
+   mNT4				& \mbox{no VSE}		& [0,\,1,\,2,\,3,\,4,\,5,\,6,\,7,\,8,\,9,\,10]				& 43\,923	& \\\hline
+ \end{tabular}
+\end{table}
+
+% 表より，とても promissing な結果が得られた．
+% VSE を行うことで，性能低下は起こりうるが，m-NT4 との比較からタプルサイズ拡大による性能向上を打ち消すほどではない．
+% 分割の際に，複数の分割に共通の値が含まれるようなバッファを用いる必要はない．
+% これは，著者らの当初の想定に反する結果であった．
+% 性能に最も影響するのは，一番小さなrangeに含まれる要素数である．
+% 一番小さな range に含まれる要素数が同じであれば，それより上のrangeをさらに分割してもしなくても大差ないようだ．
+
+表3を埋めてから書き直す必要がある．
+The results in Table~\ref{table:pre-results} were highly promising.
+Although performance degradation can occur when applying VSE, the improvement gained from enlarging tuple size is not canceled out, as seen in comparison with m-NT4. Furthermore, it is not necessary to introduce buffers in which the same values are included in multiple splits—this was contrary to the authors' initial assumption. The factor with the greatest impact on performance is the number of elements included in the smallest value range. If the size of the smallest range is the same, then further splitting of higher ranges appears to make little difference.
+
+
+
+
+

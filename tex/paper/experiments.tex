@@ -1,1 +1,39 @@
 \section{Experiments}
+
+
+\begin{figure}
+ \includegraphics[width=.95\linewidth]{figures/plot-exp2.pdf}
+ \caption{Training curve (evaluated with 10000 games of the greedy play)}
+ \label{fig:exp2}
+\end{figure}
+
+\begin{table}
+ \caption{Experiment results}
+ \label{table:exp3}
+ \small\begin{tabular}{l|l|l|l|l|l|l|l|l|l}
+  \hline \hline
+  & \multicolumn{2}{c}{1-ply (10000 games)} & \multicolumn{2}{c}{3-ply (1000 games)} & \multicolumn{2}{c}{5-ply (100 games)} \\
+  & ave. score & 32768[\%] & ave. score & 32768[\%] & ave. score & 32768[\%] \\
+  \hline
+   NT0 (no VSE) & 300241$\pm$\phantom{0}5922	& 14.3$\pm$\phantom{0}1.7		& 462677$\pm$15573		& 44.3$\pm$\phantom{0}4.7		& 508618$\pm$\phantom{0}15010	& 55.0$\pm$\phantom{0}4.9 \\ \hline
+   NT6 (no VSE) & 304149$\pm$\phantom{0}4361	& 14.9$\pm$\phantom{0}0.4		& 481544$\pm$\phantom{0}5497	& 47.8$\pm$\phantom{0}0.4	& 533801$\pm$\phantom{0}18084	& 61.3$\pm$\phantom{0}5.0 \\ \hline
+   NT7 (2-VSE)	& 342009$\pm$12427		& 19.1$\pm$\phantom{0}2.9		& 491425$\pm$19140		& 46.1$\pm$\phantom{0}5.1		& 550848$\pm$\phantom{0}19390	& 60.5$\pm$\phantom{0}5.1 \\\hline
+   NT8 (3-VSE)	& 355420$\pm$47102		& 15.5$\pm$15.6				& 438702$\pm$91280		& 29.1$\pm$29.1		& 448579$\pm$102127	& 31.5$\pm$32.0 \\\hline
+   NT9 (4-VSE)	& 320205$\pm$\phantom{0}1404	& \phantom{0}0.0$\pm$\phantom{0}0.0	& 360286$\pm$\phantom{0}1446	& \phantom{0}0.0$\pm$\phantom{0}0.0		& 363160$\pm$\phantom{00}1886	& \phantom{0}0.0$\pm$\phantom{0}0.0 \\\hline
+ \end{tabular}
+\end{table}
+
+\begin{table}
+ \caption{Results of best agents}
+ \label{table:exp3}
+ \small\begin{tabular}{l|l|l|l|l|l|l|l|l|l}
+  \hline \hline
+  & \multicolumn{2}{c}{1-ply (10000 games)} & \multicolumn{2}{c}{3-ply (1000 games)} & \multicolumn{2}{c}{5-ply (100 games)} \\
+  & ave. score & 32768[\%] & ave. score & 32768[\%] & ave. score & 32768[\%] \\
+  \hline
+   best NT0 (no VSE)	& 311\,354$\pm$1\,971		& 16.9$\pm$0.3	& 484\,281$\pm$5\,435	& 49.0$\pm$1.2	& 517\,595$\pm$17\,160	& 56.2$\pm$5.7 \\\hline
+   best NT6 (no VSE)	& 300\,410$\pm$1\,122		& 14.4$\pm$0.4	& 484\,718$\pm$6\,182	& 48.1$\pm$1.0	& 532\,599$\pm$28\,947	& 58.4$\pm$8.5 \\\hline
+   best NT7 (2-VSE)	& 341\,636$\pm$1\,719		& 19.0$\pm$0.2	& 484\,328$\pm$6\,187	& 44.2$\pm$1.9	& 541\,210$\pm$22\,938	& 56.6$\pm$5.8 \\\hline
+   best NT8 (3-VSE)	& 407\,206$\pm$\phantom{1\,}432 & 30.0$\pm$0.2	& 547\,365$\pm$4\,938	& 57.2$\pm$1.9	& 587\,690$\pm$20\,439	& 66.2$\pm$6.2 \\\hline
+ \end{tabular}
+\end{table}

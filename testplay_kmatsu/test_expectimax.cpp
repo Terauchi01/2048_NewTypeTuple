@@ -60,6 +60,9 @@ void run_test_expectimax(int search_depth, int seed_start, int seed_end)
 	  break;
       }
 
+    #ifdef DEBUG_PLAY
+      print_board(board);
+    #endif
       // プレイヤーの手選択
       int dir = player.selectHandExpectimax(board, canMoves, nextBoards, scores, search_depth, ev_table);
       for (int i = 0; i < 16; i++) {

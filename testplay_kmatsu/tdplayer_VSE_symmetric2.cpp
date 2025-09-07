@@ -355,6 +355,9 @@ enum move_dir TDPlayer::selectHandExpectimax(const board_t &/* board */,
   for (int i = 0; i < 4; i++) {   // 方向ごと
     if (!canMoves[i]) continue; // 移動できない場合はスキップ
     nextEv[i] = expectimaxPlay(depth, nextBoards[i], ev_table) + (scores[i] << 10);
+    #ifdef DEBUG_PLAY
+    printf("move = %d, ev = %d\n", i, nextEv[i]);
+    #endif
   }
   // printf("nextEvs: %d %d %d %d\n", nextEv[0], nextEv[1], nextEv[2], nextEv[3]);
   

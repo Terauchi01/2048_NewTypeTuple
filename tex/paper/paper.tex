@@ -21,29 +21,27 @@
 %\urlstyle{rm}
 \usepackage{array}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
+\usepackage{multirow}
 %
 \begin{document}
 %
-\title{Contribution Title}
+\title{Vertical Split Encoding: Enabling Larger N-Tuples for Stronger 2048 Play}
 %
 %\titlerunning{Abbreviated paper title}
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
 %
-\author{First Author\inst{1}\orcidID{0000-1111-2222-3333} \and
-Second Author\inst{2,3}\orcidID{1111-2222-3333-4444} \and
-Third Author\inst{3}\orcidID{2222--3333-4444-5555}}
+\author{Shunsuke Terauchi\inst{1} \and %\orcidID{0000-1111-2222-3333}
+Kiminori Matsuzaki\inst{1}\orcidID{0009-0003-4663-3292}}
 %
-\authorrunning{F. Author et al.}
+\authorrunning{S.~Terauchi and K.~Matsuzaki}
 % First names are abbreviated in the running head.
 % If there are more than two authors, 'et al.' is used.
 %
-\institute{Princeton University, Princeton NJ 08544, USA \and
-Springer Heidelberg, Tiergartenstr. 17, 69121 Heidelberg, Germany
-\email{lncs@springer.com}\\
-\url{http://www.springer.com/gp/computer-science/lncs} \and
-ABC Institute, Rupert-Karls-University Heidelberg, Heidelberg, Germany\\
-\email{\{abc,lncs\}@uni-heidelberg.de}}
+\institute{Kochi University of Technology, Kam, Kochi 782--8502, Japan\\
+\email{@gs.kochi-tech.ac.jp}\\
+\email{matsuzaki.Kiminori@kochi-tech.ac.jp}\\
+}
 %
 \maketitle              % typeset the header of the contribution
 %
@@ -59,6 +57,7 @@ The abstract should briefly summarize the contents of the paper in
 \input{introduction}
 \input{2048}
 \input{player}
+\input{pre-experiments}
 \input{NTuple}
 \input{experiments}
 \input{consideration}

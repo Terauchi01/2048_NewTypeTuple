@@ -1,35 +1,53 @@
 \section{2048}
-% \subsection{ルール}
 
-% 2048は，$4\times 4$ の盤面でプレイされる，確率的一人ゲームである~\cite{2048}．
-% 初期局面は盤面上に2つのタイル2（確率0.9）か4（確率0.1）の数字タイルがランダムに置かれた盤面から始まる．
+2048 is played on a $4 \times 4$ grid.
+The objective of the original 2048 game is to reach a 2048-tile by moving and merging
+the tiles on the board according to the rules below.
+In an initial state (Fig.~\ref{fig:game}), two tiles are placed randomly each with a number 2 (with probability $0.9$) or 4 (with probability $0.1$).
+The player selects a direction (either up, right, down, or left), and then all the tiles will move in the selected direction.
+When two tiles of the same number collide, they create a tile with the sum value and the player gets the sum as the score.
+Here, the merges occur from the far side and newly created tiles do not merge again on the same move: move to the right from \verb*|222 |, \verb*| 422| and \verb*|2222| results in
+\verb*|  24|, \verb*|  44|, and \verb*|  44|, respectively.
+Note that the player cannot select a direction in which no tiles move nor merge.
+After each move, a new tile appears randomly at an empty cell with a number 2 (with probability $0.9$) or 4 (with probability $0.1$).
+If the player cannot move the tiles in any direction, the game ends.
 
-% 各局面において，プレイヤは上下左右いずれかの方向を選択する．
-% すると全ての数字タイルはその方向にできるだけ移動する．
-% 移動した結果，2つの同じ数字のタイルが移動方向に衝突すると，これらは合体してその合計値のタイルとなり，
-% その合計値がスコアに加算される．合体してできたタイルは，同じターンでは別のタイルと合体することはない．
-% 例えば，盤面の行が \verb*|2___|，\verb*|__22|，\verb*|2224| であるとき，右を選択するとそれぞれ \verb*|___2|，\verb*|___4|，\verb*|__244| へと変化する．
-% その後，空白のマスのうちのランダムな1マスに2（確率0.9）か4（確率0.1）のタイルが置かれる．
+Since a turn in 2048 consists of two steps, we introduce the two notions, namely \emph{state} and \emph{afterstate}~\cite{SzJa14}, which are shown in Fig.~\ref{fig:states-and-afterstates}.
+\begin{itemize}
+ \item A \emph{state} $s_t$ is a board (and score) at which the player selects a move.
+ \item An \emph{afterstate} $s'_t$ is a board (and score) after the slide-and-merge step and before a new tile appears.
+\end{itemize}
 
-% プレイヤはいずれかのタイルが移動または衝突するような方向しか選択することができない．いずれの方向も選択できなくなるとゲームは終了する．
-% このゲームの目標はゲームが終了する前に出来るだけ高得点を獲得することである．
+\begin{figure}[t]
+  \begin{center}
+    \includegraphics[width=.95\linewidth]{figures/2048RLJIP-1.pdf}\\[5pt]
+  \begin{minipage}{.9\linewidth}
+  \begin{enumerate}
+   \item[(a)] An initial state. Two tiles are placed randomly.
+   \item[(b)] After the first move: \emph{up}. A new 2-tile appears at the lower-left corner.
+   \item[(c)] After the second move: \emph{right}. Two 2-tiles are merged to a 4-tile, and score 4 is given. A new tile appears at the upper-left corner.\\
+  \end{enumerate}
+  \end{minipage}
+  \end{center}
+ \caption{Process of game 2048~\cite{KoMa19}}
+ \label{fig:game}
+\end{figure}
 
-% \subsection{用語の導入}
-% 2048における1ターンは，「移動・合体ステップ」と「新規タイルステップ」の2ステップからなる．これらステップの前後の状態を区別するため，以下の用語を導入する．
-% \begin{figure}[t]
-%   \centering\includegraphics[width=.99\linewidth]{pdf/state_afterstate_2048.drawio.pdf}
-%   \caption{state，afterstate，progressの例（2048）}
-%   \label{afterstate2048}
-%  \end{figure}
-% \begin{description}
-%   \item[state] プレイヤが手を選択する盤面状態（とスコア）を\emph{state}と呼ぶ．
-%   \item[afterstate] プレイヤが手を選択してタイルが移動・合体した直後の盤面状態（とスコア）を\emph{afterstate}と呼ぶ．すなわち，afterstateは新規タイルが出現する前の盤面状態である．
-% \end{description}
-
-% 2048では，新しく出現するタイルはランダムに 2 か 4 の値をとる．そのため，単純にターン数をゲームの流れや進行度の指標に用いるには不都合がある．
-% この問題を解決するため，本研究では以下の指標を用いる．
-% \begin{description}
-%  \item[progress] タイルの値の合計値の半分を\emph{progress}と呼ぶ~\cite{TeKM23}．progress は，1ターンで1（新規タイルが2の場合）または2（新規タイルが4の場合）だけ増加する．
-% \end{description}
+\begin{table}[t]
+ \caption{Score and number of moves when a tile is first created}
+ \label{table:achievement}
+ \centering\begin{tabular}{rrr}
+\hline
+\hline
+  tile &     score  &   moves \\
+\hline
+  2048 &    20\,000 &     950 \\
+  4096 &    44\,000 &  1\,900 \\
+  8192 &    97\,000 &  3\,800 \\
+ 16384 &   210\,000 &  7\,500 \\
+ 32768 &   450\,000 & 15\,000 \\
+\hline
+ \end{tabular}
+\end{table}
 
 % 図\ref{afterstate2048}は，初期局面から始まるゲームの流れにおいて，state，afterstate，progress を図示したものである．
