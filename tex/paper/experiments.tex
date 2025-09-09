@@ -1,11 +1,51 @@
 \section{Experiments}
 
+\subsection{Design of N-tuple Networks and Vertical Split Encoding for 2048}
+
+6, 7, 8, 9 タプルをデザインした．デザインにあたっては，「妥当そうに見える形を平行移動する」方策を用いた．
+6タプルでは，4つの形を選定し，それらを平行移動してできる9つの組合せとした．
+7タプルでは，4つの形を選定し，それらを平行移動してできる8つの組合せとした．
+8タプルでは，3つの形を選定し，それらを平行移動してできる5つの組合せとした．
+6タプルでは，4つの形を選定し，それらを平行移動してできる7つの組合せとした．
+
+それぞれの N-Tuple について，各パラメータを 64 bits，後述する TC 学習を用いて64 GBメモリに収まることを要件として，VSE の value ranges を設計した．
+6タプルの場合は VSE なしで十分メモリに収まる．
+7タプルの場合には，少なくとも 2 つに分ける必要があり，2つのvalue ranges の大きさが 11 + 10 となるように分けた．
+8タプルの場合には，少なくとも 3 つに分ける必要があり，3つのvalue ranges の大きさが 9 + 9 + 6 となるように分けた．
+9タプルの場合には，少なくとも 4 つに分ける必要があり，4つのvalue ranges の大きさが 7 + 7 + 7 + 6 となるように分けた．
+
+各タプルについて，Multistaging としてゲームの進行に応じて、重みを参照するテーブルを切り替える手法である。本研究では 2 ステージとし、タイル 32768 が生成される前後でネットワークを切り替えるように設計した。
+
+VSE の value ranges の取り方はもう少し自由度がある．それらを網羅的に試すのは今後の課題である．
+
+\subsection{Training and Evaluation with Expectimax Search}
+
+上のように定義した N-tuple networks に対し，強化学習によってパラメータを調整した．
+学習には，Temporal Coherence 学習を用いた．
+	Temporal coherence 学習（TC 学習）
+学習率を自動的に調整する機能を備えた TD 学習であり、Jaśkowski によって初めて 2048 に導入された手法である。本研究における N タプルネットワークの学習では、効率的かつ安定的な収束のために TC 学習を採用した。
+	Optimistic initialization（OI）
+学習初期段階での探索を広く行うために、重みをゼロではなく大きな値で初期化する手法である。本研究では、すべての afterstate の初期値が 320,000 となるように重みを初期化した。
+OI 以外には，Exploration は入れていない．局所最適にならないよう，TC 学習で学習率を決定するパラメータを初期化する．step ごと．
+
+本研究では実験として6,7,8,9のそれぞれのタプルと既存研究で用いたタプルの5種類についてそれぞれ2.0e11 step分学習を行い，1e9 ごとにパラメータを出力しGreedyプレイとExpectimaxプレイでそれぞれ評価を行った．
+なお，random 要素の対応として，5つの異なるseedを用いて学習を行った．
+
+図 \ref{fig:exp2} にtraining curve を示す．
 
 \begin{figure}
  \includegraphics[width=.95\linewidth]{figures/plot-exp2.pdf}
  \caption{Training curve (evaluated with 10000 games of the greedy play)}
  \label{fig:exp2}
 \end{figure}
+
+グラフから分かること．
+
+
+最終的に得られたN-tuple network を用いて，Expectimax 探索 (3-ply, 5-ply) と組合せた評価も行った．
+結果を \ref{table:exp3} に示す．
+
+表から分かること．
 
 \begin{table}
  \caption{Experiment results}
@@ -23,9 +63,18 @@
  \end{tabular}
 \end{table}
 
+\subsection{Evaluation of Best N-tuple Networks}
+
+特に，NT8 で学習がうまくいったものとうまくいかなかったものがあったので，9タプルを除くそれぞれのNTupleの大きさについて，
+5つの学習のうちもっともうまくいったネットワークを用いての評価を行った．
+1つのネットワークに対して，5つの異なるシードでテストプレイ (1-ply, 3-ply, 5-ply) を行った結果を表 \ref{table:exp4} に示す．
+
+表から分かること．
+
+
 \begin{table}
  \caption{Results of best agents}
- \label{table:exp3}
+ \label{table:exp4}
  \small\begin{tabular}{l|l|l|l|l|l|l|l|l|l}
   \hline \hline
   & \multicolumn{2}{c}{1-ply (10000 games)} & \multicolumn{2}{c}{3-ply (1000 games)} & \multicolumn{2}{c}{5-ply (100 games)} \\
