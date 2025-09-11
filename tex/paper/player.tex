@@ -24,17 +24,17 @@ Indeed, Ja\'skowski experimentally demonstrated that it was more effective to us
 \setlength{\doublerulesep}{.4pt}
  \caption{Number of parameters and required memory size.  In the calculation of memory size, We assume an implementation of temporal coherence learning with 2 stages and 64 bits per element.}
 \label{table:NTupleMemory}
- \begin{tabular}{l|rr}
+ \centering\begin{tabular}{l|rr||l|rr}
 \hline\hline
-  size & parameters & memory \\
+  network & parameters & memory & network & parameters & memory \\
 \hline
-  $1 \times 6$-tuple & 34\,012\,224 & 1.5 GB \\
-  $1 \times 7$-tuple & 612\,220\,032 & 27.4 GB \\
-  $1 \times 8$-tuple & 11\,019\,960\,576 & 492.6 GB \\
-  $1 \times 9$-tuple & 198\,359\,290\,368 & 8\,867.4 GB \\
+  $1 \times 6$-tuple & 34\,012\,224 & 1.5 GB &  $8 \times 6$-tuple & 272\,097\,792 & 12.2 GB \\
+  $1 \times 7$-tuple & 612\,220\,032 & 27.4 GB &  $8 \times 7$-tuple & 4\,897\,760\,256 & 218.9 GB \\
+  $1 \times 8$-tuple & 11\,019\,960\,576 & 492.6 GB &  $8 \times 8$-tuple & 88\,159\,684\,608 & 3.9 TB \\
+  $1 \times 9$-tuple & 198\,359\,290\,368 & 8.9 TB &  $8 \times 9$-tuple & 1\,586\,874\,322\,944 & 70.9 TB \\
 \hline
-% (*    18 18 18 18 18 18 18 18 18)
-% (/ (* 18 18 18 18 18 18 18 18 18 8 3 2) 1024.0 1024.0 1024.0)
+% (*    18 18 18 18 18 18 18 18 18 8)
+% (/ (* 18 18 18 18 18 18 18 18 18 8 8 3 2) 1024.0 1024.0 1024.0)
  \end{tabular}
 \end{table}
 

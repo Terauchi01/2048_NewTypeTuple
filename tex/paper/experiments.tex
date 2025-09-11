@@ -12,21 +12,21 @@
 Table~\ref{fig:NTupleVSE} summarizes the design of N-tuple Networks and Vertical Split Encoding
 used in our experiments for 2048.
 
-By adopting the heuristics of ``manually creating reasonable shapes and generating their translations''~\cite{Jask17}, we designed new sets of N-tuple networks for 6-, 7-, 8-, and 9-tuple cases.
+By adopting the heuristics of ``manually creating reasonable shapes and generating their translations''~\cite{Jask18}, we designed new sets of N-tuple networks for 6-, 7-, 8-, and 9-tuple cases.
 \begin{itemize}
 \item NT6: For the 6-tuple networks, we selected four shapes and by their translations obtained nine tuples.
 \item NT7: For the 7-tuple networks, we selected four shapes and by their translations obtained eight tuples.
 \item NT8: For the 8-tuple networks, we selected three shapes and by their translations obtained five tuples.
 \item NT9: For the 9-tuple networks, we selected four shapes and by their translations obtained seven tuples.
 \end{itemize}
-As a baseline, we used NT6-M, a network consisting of 8$\times$6-tuples, which was first selected by Matsuzaki~\cite{Mats16} and employed in the state-of-the-art agent by Guei et al.~\cite{Guei22}.
+As a baseline, we used NT6-M, a network consisting of 8$\times$6-tuples, which was first selected by Matsuzaki~\cite{Mats16} and employed in the state-of-the-art agent by Guei et al.~\cite{GuCW22}.
 
 % それぞれの N-Tuple について，各パラメータを 64 bits とし，3倍のメモリを必要とする TC 学習と，2倍のメモリを必要とする multi-staging を用いても64 GBメモリに収まることを要件として，VSE の value ranges を設計した．
 % 6タプルからなる NT6 と NT6M の場合は VSE なしで十分メモリに収まる．
 % 7タプルからなる NT7 の場合には，少なくとも 2 つに分ける必要があり，2つのvalue ranges の大きさが 11 + 10 となるように分けた．
 % 8タプルからなる NT8 の場合には，少なくとも 3 つに分ける必要があり，3つのvalue ranges の大きさが 9 + 9 + 6 となるように分けた．
 % 9タプルからなる NT9 の場合には，少なくとも 4 つに分ける必要があり，4つのvalue ranges の大きさが 7 + 7 + 7 + 6 となるように分けた．
-For each set of N-tuples, we designed the VSE value ranges under the following assumptions: each element in lookup tables has 64 bits; we use temporal coherence learning~\cite{Jask17} that requires three times the memory with three lookup tables; and we use multi-staging technique that requires two times the memory with two stages; the whole training program should fit within 64 GB of memory.
+For each set of N-tuples, we designed the VSE value ranges under the following assumptions: each element in lookup tables has 64 bits; we use temporal coherence learning~\cite{Jask18} that requires three times the memory with three lookup tables; and we use multi-staging technique that requires two times the memory with two stages; the whole training program should fit within 64 GB of memory.
 Under these assumption, our design of VSE was as follows.
 \begin{itemize}
 \item For NT6 and NT6-M, the parameters sufficiently fits within the memory without VSE.
@@ -51,10 +51,10 @@ Exhaustively exploring those possibilities remains as future work.
 For the N-tuple networks defined above, we conducted reinforcement learning to tune their parameters.
 In this study, we employed Temporal Coherence learning with Optimistic Initialization and Restart Strategy.
 \begin{description}
- \item[Temporal Coherence learning] Temporal Coherence learning is a variant of TD learning that enables automatic adjustment of the learning rate, which was first introduced to 2048 by Ja\'skowski~\cite{Jas17}.  To keep the effect of the following Optimistic Initialization, we decayed the learning rate from 0.5.
- \item[Optimistic Initialization] Optimistic Initialization is a method of encouraging exploration in the training by initializing the parameters with large values.  In this study, we use the same initial values as Guei et al.~\cite{Guei22}: we initialize the parameters such that all afterstates have values of 320\,000.
- \item[Restart Strategy] The games of 2048 are easy at the beginning but hard when the board is filled with large-numbered tiles.  To address this issue, we appied the Restart Strategy proposed by Matsuzaki~\cite{Mats18} with constant number 10 of restarts.
- \item[Multi-staging] Following prior work~\cite{Guei22}, we also employed the multi-staging method, in which the lookup tables are switched depending on game progression. In this study, we split the game into two stages, switching the lookup tables before and after the generation of a 32\,768 tile.
+ \item[Temporal Coherence learning] Temporal Coherence learning is a variant of TD learning that enables automatic adjustment of the learning rate, which was first introduced to 2048 by Ja\'skowski~\cite{Jask18}.  To keep the effect of the following Optimistic Initialization, we decayed the learning rate from 0.5.
+ \item[Optimistic Initialization] Optimistic Initialization is a method of encouraging exploration in the training by initializing the parameters with large values.  In this study, we use the same initial values as Guei et al.~\cite{GuCW22}: we initialize the parameters such that all afterstates have values of 320\,000.
+ \item[Restart Strategy] The games of 2048 are easy at the beginning but hard when the board is filled with large-numbered tiles.  To address this issue, we appied the Restart Strategy proposed by Matsuzaki~\cite{Mats17} with constant number 10 of restarts.
+ \item[Multi-staging] Following prior work~\cite{GuCW22}, we also employed the multi-staging method~\cite{YWHC16}, in which the lookup tables are switched depending on game progression. In this study, we split the game into two stages, switching the lookup tables before and after the generation of a 32\,768 tile.
 \end{description}
 We introduced no additional exploration in the training apart from Optimistic Initialization.
 To avoid convergence to local optima, we reset the parameters controling the learning rate in Temporal Coherence learning every $50 \times 10^9$ steps.

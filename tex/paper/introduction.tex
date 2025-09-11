@@ -1,22 +1,42 @@
 \section{Introduction}
 
-The game \emph{2048} is a stochastic single-player game developed by G. Cirulli~\cite{2048}.
-Several computer players have been implemented, among which the most successful approaches employ N-tuple networks as evaluation functions in combination with Expectimax search.
-For instance, the state-of-the-art player developed by Guei et al.~\cite{Guei22} achieved an average score of 625\,377 by using two-stage N-tuple networks consisting of 8 $\times$ 6-tuples---trained by extended temporal-difference learning with optimistic initialization---, 6-ply expectimax search, and a game-specific tile-downgrading technique.
+N-tuple networks (a.k.a. pattern-based evaluation functions in Othello~\cite{Buro98}) are simple but
+efficient methods for designing evaluation functions for board games and other applications.
+N-tuple networks compute an evaluation value by sampling local features on the board, retrieving local evaluation values from lookup tables, and summing them up (or calculating linear combination of them).
+The parameters in the lookup tables are often adjusted by supervised learning or reinforcement learning techniques.
+Several strong computer players have been developed based on N-tuple networks, for example,  for Othello~\cite{Buro98,Jask14,NgIL12,KuSM25}, \mbox{connect-4}~\cite{ThKK12}, connect-6~\cite{HuQP18}, EinStein W\"urfelt Nicht!~\cite{CHHH24,HsHs25}.
+
+The target game in this study is \emph{2048}~\cite{2048}.
+2048 is a stochastic single-player game developed by G. Cirulli.
+Several computer players have been implemented \cite{Mats21,ASOH22,GuCW22,SzJa14,YWHC16,Jask18,KGWW22,Zhou19,WaMa25}, among which the most successful approaches employ N-tuple networks as evaluation functions~\cite{SzJa14} in combination with Expectimax search~\cite{YWHC16}.
+For instance, the state-of-the-art player developed by Guei et al.~\cite{GuCW22} achieved an average score of 625\,377 by using two-stage N-tuple networks consisting of 8 $\times$ 6-tuples---trained by extended temporal-difference learning with optimistic initialization---, 6-ply expectimax search, and a game-specific tile-downgrading technique.
 
 
-In general, larger N-tuple networks yield better performance at the cost of longer training times~\cite{Terauchi25}.
+In general, larger N-tuple networks yield better performance at the cost of larger memory sizes required and longer training times for tuning~\cite{TeMa25}.
 Let N-tuple networks consist of $m$ $\times$ $n$-tuples, then we can consider two approaches to enlarging N-tuple networks.
 The first approach is to increase the number $m$ of tuples.  While this is relatiely straightforward to implement, Oka and Matsuzaki~\cite{OkMa16} demonstrated that the performance saturated only with this approach.
-The second approach is to increase the tuple size $n$.  In the early stages of research on 2048, computer players improved the performance by enlarging 4-tuples to 6-tuples.  However, as Jaskowski~\cite{Jask17} suggested, further enlargement has been considered infeasible for the game 2048 due to the exponential growth in the number of parameters.  Note that, in 2048, a board cell can take 18 possible values, and N-tuple networks with $m$ $\times$ $n$-tuples have $m\times 18^n$ parameters.  A 6-tuple network has $3.4\times 10^7$ parameters (13 GB of memory~\footnote{The memory size is calculated for 2-stage 8 $\times$ $n$-tuple with temporal coherence learning~\cite{Jask17} assuming 64 bits per weight.}), a 7-tuple network has $6.1\times 10^8$ parameters (235 GB), and an 8-tuple has $1.1\times 10^10$ parameters (4.2 TB).
+The second approach is to increase the tuple size $n$.  In the early stages of research on 2048, computer players improved the performance by enlarging 4-tuples to 6-tuples.  However, as Jaskowski~\cite{Jask18} suggested, further enlargement has been considered infeasible for the game 2048 due to the exponential growth in the number of parameters.  Note that, in 2048, a board cell can take 18 possible values, and N-tuple networks with $m$\,$\times$\,$n$-tuples have $m\times 18^n$ parameters.  A 6-tuple network has $3.4\times 10^7$ parameters (requiring 13 GB of memory~\footnote{The memory size is calculated for the case that 8\,$\times$\,$n$-tuple networks with 2-stage, 64 bits per parameter, are tuned with temporal coherence learning~\cite{Jask18}.}), a 7-tuple network has $6.1\times 10^8$ parameters (235 GB), and an 8-tuple has $1.1\times 10^{10}$ parameters (4.2 TB).
 
 
-In this study, we overcome the aforementioned limitation by proposing a novel encoding method, named \emph{Vertical Split Encoding} (\emph{VSE}). In $k$-VSE, the 18 possibe cell values are divided into $k$ value ranges. For each value range, a board state is encoded while ignoring values outside the range (except for empty cells, represented as 0).
-For example, in 2-VSE, the 18 possible values are divided into two value ranges [0--9] and [10--18]. A state [0, 1, 11, 12] is then encoded as $[0, 1, L, L]$ and $[0, S, 11, 12]$, where $L$ and $S$ are special labels denoting \emph{larger} and \emph{smaller}, respectively.
-With this method, the numbers of parameters required for $m$ $\times$ $n$-tuples are reduced to $m\times 11^n$ with 2-VSE, $m\times 9^n$ with 3-VSE, and $m\times 7^n$ with 4-VSE. The reduction is drastic: for instance when $n=8$, the numbers of parameters is reduced to 3.9\% with 2-VSE, 1.2\% with 3-VSE, and 0.21\% with 4-VSE.
+In this study, we overcome the aforementioned limitation by proposing a novel encoding method, named \emph{Vertical Split Encoding} (\emph{VSE}). In $k$-VSE, we encode a board state into $k$ board instances based on $k$ value ranges of interest. Here, for each value range, encoded board takes less possible values by equating values outside the range (except for empty cells, represented as E).
+For example, in 2-VSE with value ranges of interest $2^1$--$2^8$ and $2^9$--$2^{17}$, a board $[E, 2^1, 2^{11}, 2^{12}, \ldots]$ is encoded into $[E, 2^1, L, L]$ and $[E, S, 2^{11}, 2^{12}]$, where $L$ and $S$ are newly introduced special labels denoting \emph{larger} and \emph{smaller} values, respectively.
+With VSE, the numbers of parameters required for $m$\,$\times$\,$n$-tuples in 2048 are reduced to $m\times 11^n$ with 2-VSE, $m\times 9^n$ with 3-VSE, and $m\times 7^n$ with 4-VSE. The reduction is drastic: for instance when $n=8$, the numbers of parameters is reduced to 3.9\% with 2-VSE, 1.2\% with 3-VSE, and 0.21\% with 4-VSE, respectively.
 
 
-We demonstrate the effectiveness of VSE in the context of 2048.
-We developed several computer players using N-tuple networks: 6-tuples without VSE, 7-tuples with 2-VSE, 8-tuples with 3-VSE, and 9-tuples with 4-VSE.  All the N-tuple networks are successfully trained using at most 64 GB of memory.
-The 7-, 8-, and 9-tuple networks outperformed the 6-tuple baseline.
-In particular, the best 8-tuple networks achieved an average score of 407\,067 with greedy play, 549\,574 with 3-ply Expectimax, and 594\,619 with 5-ply Expectimax.
+We demonstrate the effectiveness of VSE for 2048 with intensive experiments.
+In addition to 6-tuple networks without VSE, we developed computer players using larger N-tuple networks: 7-tuple networks with 2-VSE, 8-tuple networks with 3-VSE, and even 9-tuple networks with 4-VSE.
+All the N-tuple networks are successfully trained on a commodity computer using at most 64 GB of memory, and the 7-, 8-, and 9-tuple networks outperformed the 6-tuple baseline.
+In particular, the best 8-tuple networks achieved an average score of 407\,206 with 1-ply lookahead (greedy) play, 547\,365 with 3-ply Expectimax search, and 587\,690 with 5-ply Expectimax search, which are significantly better than the 6-tuple baseline.
+
+% 本研究の主な貢献は以下の2点である。
+% 第一に，従来はメモリや学習時間の制約から現実的に扱うことが困難であった大規模タプルを実現可能とする，VSE を提案したことである．
+% 第二に，VSEを用いた大規模Nタプルネットワークが，最先端プレイヤで用いられている6タプルベースのプレイヤを同一条件にて性能で上回ることを実験的に確認した点である。
+
+% 本研究は，様々なゲームにおいて用いられているNタプルネットワークにおいてパラメータを削減する新しい方法を提案するものである．
+
+The main contributions of this study are twofold.
+\begin{itemize}
+ \item We proposed Vertical Split Encoding (VSE) to enable employing larger tuples, which had previously been impractical due to memory constraints.
+ \item We experimentally demonstrated that large N-tuple networks with VSE can outperform 6-tuple baseline under the same experimental conditions.
+\end{itemize}
+More broadly, this work introduces a novel approach for reducing parameters in N-tuple networks, which are widely applied across various games.

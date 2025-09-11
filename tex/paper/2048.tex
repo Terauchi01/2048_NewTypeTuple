@@ -3,7 +3,7 @@
 2048 is played on a $4 \times 4$ grid.
 The objective of the original 2048 game is to reach a 2048-tile by moving and merging
 the tiles on the board according to the rules below.
-In an initial state (Fig.~\ref{fig:game}), two tiles are placed randomly each with a number 2 (with probability $0.9$) or 4 (with probability $0.1$).
+In an initial state, two tiles are placed randomly each with a number 2 (with probability $0.9$) or 4 (with probability $0.1$).
 The player selects a direction (either up, right, down, or left), and then all the tiles will move in the selected direction.
 When two tiles of the same number collide, they create a tile with the sum value and the player gets the sum as the score.
 Here, the merges occur from the far side and newly created tiles do not merge again on the same move: move to the right from \verb*|222 |, \verb*| 422| and \verb*|2222| results in
@@ -20,32 +20,24 @@ Since a turn in 2048 consists of two steps, we introduce the two notions, namely
 
 \begin{figure}[t]
   \begin{center}
-    \includegraphics[width=.95\linewidth]{figures/2048RLJIP-1.pdf}\\[5pt]
-  \begin{minipage}{.9\linewidth}
-  \begin{enumerate}
-   \item[(a)] An initial state. Two tiles are placed randomly.
-   \item[(b)] After the first move: \emph{up}. A new 2-tile appears at the lower-left corner.
-   \item[(c)] After the second move: \emph{right}. Two 2-tiles are merged to a 4-tile, and score 4 is given. A new tile appears at the upper-left corner.\\
-  \end{enumerate}
-  \end{minipage}
+    \includegraphics[width=.95\linewidth]{figures/state_afterstate.pdf}\\[5pt]
   \end{center}
- \caption{Process of game 2048~\cite{KoMa19}}
- \label{fig:game}
+ \caption{Process of game 2048}
+ \label{fig:states-and-afterstates}
 \end{figure}
 
 \begin{table}[t]
  \caption{Score and number of moves when a tile is first created}
+\setlength{\doublerulesep}{.4pt}
  \label{table:achievement}
- \centering\begin{tabular}{rrr}
+ \centering\begin{tabular}{lrrrrr}
 \hline
 \hline
-  tile &     score  &   moves \\
+  tile & \makebox[4em][r]{2048} & \makebox[4em][r]{4096} & \makebox[4em][r]{8192} & \makebox[4em][r]{16384} & \makebox[4em][r]{32768} \\
 \hline
-  2048 &    20\,000 &     950 \\
-  4096 &    44\,000 &  1\,900 \\
-  8192 &    97\,000 &  3\,800 \\
- 16384 &   210\,000 &  7\,500 \\
- 32768 &   450\,000 & 15\,000 \\
+  score & 20\,000 & 44\,000 & 97\,000 & 210\,000 & 450\,000 \\
+\hline
+  moves &     950 & 1\,900 &  3\,800 & 7\,600 & 15\,200 \\
 \hline
  \end{tabular}
 \end{table}
