@@ -22,6 +22,7 @@
 \usepackage{array}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
 \usepackage{multirow}
+\usepackage{url}
 %
 \begin{document}
 %
@@ -31,14 +32,14 @@
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
 %
-\author{Shunsuke Terauchi\inst{1} \and %\orcidID{0000-1111-2222-3333}
-Kiminori Matsuzaki\inst{1}\orcidID{0009-0003-4663-3292}}
+\author{Shunsuke Terauchi \and %\orcidID{0000-1111-2222-3333}
+Kiminori Matsuzaki\orcidID{0009-0003-4663-3292}}
 %
 \authorrunning{S.~Terauchi and K.~Matsuzaki}
 % First names are abbreviated in the running head.
 % If there are more than two authors, 'et al.' is used.
 %
-\institute{Kochi University of Technology, Kam, Kochi 782--8502, Japan\\
+\institute{Kochi University of Technology, Kami, Kochi 782--8502, Japan\\
 \email{295141a@gs.kochi-tech.ac.jp}\\
 \email{matsuzaki.Kiminori@kochi-tech.ac.jp}\\
 }
@@ -51,7 +52,7 @@ but the tuple size has been limited to six or seven due to the memory constraint
 In this study, we break through this limitation by proposing a novel encoding method called Vertical Split Encoding (VSE).  VSE enables us to design N-tuple networks with 8-tuples or even 9-tuples.
 We confirm through experiments that the performance degradation resulting from applying VSE is reasonably small, and that the newly developed 8-tuple networks significantly outperform the 6-tuple baseline, which was used in the state-of-the-art computer player, under the same experimental setting.
 
-\keywords{2048 \and N-tuple netwoks \and Encoding.}
+\keywords{2048 \and N-tuple networks \and Encoding.}
 \end{abstract}
 %
 %
@@ -65,9 +66,11 @@ We confirm through experiments that the performance degradation resulting from a
 % \input{consideration}
 \input{conclusion}
 
-\bibliographystyle{splncs04}
-\bibliography{ref}
+\subsubsection{\ackname} This work was supported in part by JSPS KAKENHI Grant Number JP23K11383.
 
+% \bibliographystyle{splncs04}
+% \bibliography{ref}
+\input{paper_bbl}
 \end{document}
 
 \begin{credits}
@@ -116,4 +119,4 @@ on Proceedings, pp. 1--2. Publisher, Location (2010)
 LNCS Homepage, \url{http://www.springer.com/lncs}, last accessed 2023/10/25
 \end{thebibliography}
 
-% LocalWords:  VSE
+% LocalWords:  VSE Shunsuke Terauchi

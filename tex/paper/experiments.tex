@@ -9,37 +9,37 @@
 % 9タプル NT9 では，4つの形を選定し，それらを平行移動してできる7つの組合せとした．
 % baseline として，先行研究で用いられていた 8x6-tuples からなるネットワーク NT6-M を用いる．
 
-Table~\ref{fig:NTupleVSE} summarizes the design of N-tuple Networks and Vertical Split Encoding
+Table~\ref{fig:NTupleVSE} summarizes the design of N-tuple networks and Vertical Split Encoding
 used in our experiments for 2048.
 
 By adopting the heuristics of ``manually creating reasonable shapes and generating their translations''~\cite{Jask18}, we designed new sets of N-tuple networks for 6-, 7-, 8-, and 9-tuple cases.
 \begin{itemize}
-\item NT6: For the 6-tuple networks, we selected four shapes and by their translations obtained nine tuples.
-\item NT7: For the 7-tuple networks, we selected four shapes and by their translations obtained eight tuples.
-\item NT8: For the 8-tuple networks, we selected three shapes and by their translations obtained five tuples.
-\item NT9: For the 9-tuple networks, we selected four shapes and by their translations obtained seven tuples.
+\item \textsf{NT6}: We designed four shapes of 6-tuples and obtained nine tuples by their translations.
+\item \textsf{NT7}: We designed four shapes of 7-tuples and obtained eight tuples by their translations.
+\item \textsf{NT8}: We designed three shapes of 8-tuples and obtained five tuples by their translations.
+\item \textsf{NT9}: We designed four shapes of 9-tuples and obtained seven tuples by their translations.
 \end{itemize}
-As a baseline, we used NT6-M, a network consisting of 8$\times$6-tuples, which was first selected by Matsuzaki~\cite{Mats16} and employed in the state-of-the-art agent by Guei et al.~\cite{GuCW22}.
+As a baseline, we used \textsf{NT6-M}, a network consisting of 8$\times$6-tuples, which was first selected through intensive experiments by Matsuzaki~\cite{Mats16} and employed in the state-of-the-art player by Guei et al.~\cite{GuCW22}.
 
 % それぞれの N-Tuple について，各パラメータを 64 bits とし，3倍のメモリを必要とする TC 学習と，2倍のメモリを必要とする multi-staging を用いても64 GBメモリに収まることを要件として，VSE の value ranges を設計した．
 % 6タプルからなる NT6 と NT6M の場合は VSE なしで十分メモリに収まる．
 % 7タプルからなる NT7 の場合には，少なくとも 2 つに分ける必要があり，2つのvalue ranges の大きさが 11 + 10 となるように分けた．
 % 8タプルからなる NT8 の場合には，少なくとも 3 つに分ける必要があり，3つのvalue ranges の大きさが 9 + 9 + 6 となるように分けた．
 % 9タプルからなる NT9 の場合には，少なくとも 4 つに分ける必要があり，4つのvalue ranges の大きさが 7 + 7 + 7 + 6 となるように分けた．
-For each set of N-tuples, we designed the VSE value ranges under the following assumptions: each element in lookup tables has 64 bits; we use temporal coherence learning~\cite{Jask18} that requires three times the memory with three lookup tables; and we use multi-staging technique that requires two times the memory with two stages; the whole training program should fit within 64 GB of memory.
-Under these assumption, our design of VSE was as follows.
+For each set of N-tuples, we designed the VSE value ranges under the following assumptions: each element in lookup tables has 64 bits; we use temporal coherence learning~\cite{Jask18} that requires three times as much memory with three lookup tables; and we use multi-staging technique with two stages~\cite{GuCW22} that requires two times as much memory; the whole training program should fit within 64 GB of memory.
+Our final design of VSEs was as follows.
 \begin{itemize}
-\item For NT6 and NT6-M, the parameters sufficiently fits within the memory without VSE.
-\item For NT7, at least two splits are required, and we diivded into two value ranges of sizes being 11 and 10.
-\item For NT8, at least three splits are needed, and we divided into three value ranges of sizes being 9, 9, and 6.
-\item For NT9, at least four splits are needed, and we divided into four value ranges of sizes being 7, 7, 7, and 6.
+\item For \textsf{NT6} and \textsf{NT6-M}, the parameters sufficiently fit within the memory without VSE, and so we do not apply VSE.
+\item For \textsf{NT7}, at least two splits are needed, and thus we use 2-VSE with two value ranges of sizes 11 and 10.
+\item For \textsf{NT8}, at least three splits are needed, and thus we use 3-VSE with three value ranges of sizes 9, 9, and 6.
+\item For \textsf{NT9}, at least four splits are needed, and thus we use 4-VSE with four value ranges of sizes 7, 7, 7, and 6.
 \end{itemize}
 
 % VSE の value ranges の取り方はもう少し自由度がある．それらを網羅的に試すのは今後の課題である．
-Note that there exist a few more flexibility in the choice of value ranges in VSE.
+Note that there exist a few more flexibility in the choice of value ranges of VSE.
 Exhaustively exploring those possibilities remains as future work.
 
-\subsection{Training and Evaluation with Expectimax Search}
+\subsection{Training and Evaluation with 1-ply Lookahead Play}
 
 % 上のように定義した N-tuple networks に対し，強化学習によってパラメータを調整した．
 % 学習には，Optimistic initialization ありの Temporal Coherence 学習を用いた．
@@ -48,20 +48,20 @@ Exhaustively exploring those possibilities remains as future work.
 % OI 以外には，Exploration は入れていない．局所最適にならないよう，TC 学習で学習率を決定するパラメータを初期化する．$50 x 10^9$ step ごと．
 % また，先行研究にならって，ゲームの進行に応じて重みを参照するテーブルを切り替える multi-staging 手法を用いる。本研究では 2 ステージから構成し、タイル 32768 が生成される前後でネットワークを切り替える．
 
-For the N-tuple networks defined above, we conducted reinforcement learning to tune their parameters.
+For the N-tuple networks with VSE defined above, we conducted reinforcement learning to tune their parameters.
 In this study, we employed Temporal Coherence learning with Optimistic Initialization and Restart Strategy.
 \begin{description}
- \item[Temporal Coherence learning] Temporal Coherence learning is a variant of TD learning that enables automatic adjustment of the learning rate, which was first introduced to 2048 by Ja\'skowski~\cite{Jask18}.  To keep the effect of the following Optimistic Initialization, we decayed the learning rate from 0.5.
- \item[Optimistic Initialization] Optimistic Initialization is a method of encouraging exploration in the training by initializing the parameters with large values.  In this study, we use the same initial values as Guei et al.~\cite{GuCW22}: we initialize the parameters such that all afterstates have values of 320\,000.
- \item[Restart Strategy] The games of 2048 are easy at the beginning but hard when the board is filled with large-numbered tiles.  To address this issue, we appied the Restart Strategy proposed by Matsuzaki~\cite{Mats17} with constant number 10 of restarts.
- \item[Multi-staging] Following prior work~\cite{GuCW22}, we also employed the multi-staging method~\cite{YWHC16}, in which the lookup tables are switched depending on game progression. In this study, we split the game into two stages, switching the lookup tables before and after the generation of a 32\,768 tile.
+ \item[Temporal Coherence learning~\normalfont{\cite{Jask18}}] Temporal Coherence learning (TC learning) is a variant of TD learning that enables automatic adjustment of the learning rate, which was first introduced to 2048 by Ja\'skowski.  To keep the effect of the following Optimistic Initialization, we decayed the learning rate from 0.5.
+ \item[Optimistic Initialization~\normalfont{\cite{GuCW22}}] Optimistic Initialization (OI) is a method of encouraging exploration in the training by initializing the parameters with large values.  In this study, we use the same initial values as Guei et al.~\cite{GuCW22}: we initialize the parameters such that all afterstates have values of 320\,000.
+ \item[Restart Strategy~\normalfont{\cite{Mats17}}] The games of 2048 are easy at the beginning but hard when the board is filled with large-number tiles.  To address this issue, we applied the restart strategy with constant number 10 of restarts.
+ \item[Multi-staging~\normalfont{\cite{YWHC16}}] Following prior work~\cite{GuCW22}, we also employed the multi-staging method, in which the lookup tables are switched depending on game progression. In this study, we split the game into two stages, switching the lookup tables before and after the generation of a 32\,768 tile.
 \end{description}
-We introduced no additional exploration in the training apart from Optimistic Initialization.
-To avoid convergence to local optima, we reset the parameters controling the learning rate in Temporal Coherence learning every $50 \times 10^9$ steps.
+We introduced no additional exploration in the training apart from OI.
+To avoid convergence to local optima, we reset the parameters controlling the learning rate in TC learning every $50 \times 10^9$ steps.
 
 % 本研究における学習は，6,7,8,9のそれぞれのタプルと既存研究で用いたタプルの5種類についてそれぞれ$200 x 10^11$ step分学習を行う．$1x10^9$ ごとにパラメータを出力し，1-ply lookahead (Greedy) プレイ 10000 ゲームの平均得点をモニターした．
 % なお，random 要素の対応として，5つの異なるseedを用いて学習を行い，そられの平均と標準偏差を求めた．
-In this study, for each of five types of N-tuple networks above, we conducted the training for $200 \times 10^{11}$ steps.  During the training, we output the parameters every $1 \times 10^9$ steps and evaluate their performance using the average score of 10\,000 games under 1-ply lookahead (Greedy) play.
+In this study, for each of five types of N-tuple networks above, we conducted the training for $200 \times 10^{9}$ steps.  During the training, we output the snapshot of the parameters every $1 \times 10^9$ steps and evaluate their performance in terms of the average score of 10\,000 games with 1-ply lookahead (greedy) play.
 To mitigate the randomness, we conducted the training with five different random seeds, and report their means and standard deviations.
 
 % 図 \ref{fig:exp2} にtraining curve を示す．
@@ -72,21 +72,22 @@ To mitigate the randomness, we conducted the training with five different random
 % NT7 の学習が他よりも遅かった理由について，タプルの形によるものか，2-VSE によるものか，現時点では分かっていない．
 % また，もう一つ面白い点として，TC学習による学習率をリセットしたとき，タプルサイズが大きいもののほうがスコアの下がり方が小さい．
 Figure~\ref{fig:exp2} shows the training curves.
-The final average scores after the training with $200 \times 10^9$ steps were ranked as NT8 $>$ NT7 $>$ NT9 $>$ NT6 $\approx$ NT6-M.
-The standard deviation of NT8 was very large because tranining with two seeds succeeded achieving average scores of around 400\,000, while training with the other three saturated at around 320\,000.
-Even considering these poor cases, NT8 still outperformed NT6 and NT6-M.
-For NT7 and NT9, the differences from NT6 and NT6-M were sufficiently larger than their standard deviations.
-These results indicate that increasing the N-tuple size significantly improved performance.
+The final average scores after the training with $200 \times 10^9$ steps were ranked as \textsf{NT8} $>$ \textsf{NT7} $>$ \textsf{NT9} $>$ \textsf{NT6} $\approx$ \textsf{NT6-M}.
+The standard deviation for \textsf{NT8} was very large because training with two seeds succeeded achieving average scores of around 400\,000, while training with the other three saturated at around 320\,000.
+Even considering these poor cases, \textsf{NT8} still outperformed \textsf{NT6} and \textsf{NT6-M}.
+For \textsf{NT7} and \textsf{NT9}, the differences from \textsf{NT6} and \textsf{NT6-M} were sufficiently larger than their standard deviations.
+These results indicated that increasing the N-tuple size with the help of VSE significantly improved performance.
 
-A closer look at the training progress reveals that when the learning rates were reset in Temporal Coherence learning, networks with larger tuple sizes showed smaller drops in score. This means that the training could be more stable with larger tuple sizes but at the same time they tend to converge local optima.
-Another interesting observation is that NT7 was the only networks with a learning curve with a different shape.  Possible reasons for that slower learning would be its tuple design or the use of 2-VSE, but we have no clear evidences so far.
+A closer look at the training progress reveals that when the learning rates were reset in TC learning, networks with larger tuples showed smaller drops in score. This means that the training could be more stable with larger tuples but at the same time they tend to converge local optima.
+Another interesting observation was that \textsf{NT7} was the only networks with a learning curve with a different shape.  Possible reasons for that slower learning would come from its tuple design or the use of 2-VSE, but we have no clear evidences so far.
 
-\begin{figure}
- \includegraphics[width=.95\linewidth]{figures/plot-exp2.pdf}
- \caption{Training curve evaluated with 10000 games of the greedy play. The shaded areas show the standard deviations from five training runs.}
+\begin{figure}[ht]
+ \includegraphics[width=.98\linewidth]{figures/plot-exp2.pdf}
+ \caption{Training curve evaluated with 10000 games of 1-ply lookahead (greedy) play. The shaded areas show the standard deviations over five training runs.}
  \label{fig:exp2}
 \end{figure}
 
+\subsection{Evaluation with Expectimax Search}
 % 最終的に得られたN-tuple network を用いて，Expectimax 探索 (3-ply, 5-ply) と組合せた評価も行った．
 % 結果を \ref{table:exp3} に示す．
 % 平均得点だけを見ると，3-ply や 5-ply のExpectimax探索を組み合わせたときに，NT6 や NT6-M を超える平均得点
@@ -99,25 +100,15 @@ Another interesting observation is that NT7 was the only networks with a learnin
 We also evaluated the final N-tuple networks in combination with Expectimax search (3-ply and 5-ply).
 The results are shown in Table~\ref{table:exp3}.
 
-Looking only at the average scores when combined with 3-ply or 5-ply Expectimax search, NT7 was the only network that outperformed NT6 and NT6-M.
-For NT9, the addition of search provided almost no improvement in performance. In fact, the generation rate of the 32\,768 tile was 0.0\% in all cases. This is likely due to overfitting: the lookup table contained too many parameters, causing the network to converge to local optima that fail to reach a 32\,768 tile.
-For NT8, if training was successful (achieving around 400\,000 points in 1-ply play), the combination of Expectimax search further improved performance. However, when training saturated, NT8 exhibited behavior similar to NT9, failing to reach a 32\,768 tile. As a result, both the average score and the 32\,768-tile reaching rate showed very large standard deviations.
-
-\begin{table}
- \caption{Experiment results}
+\begin{table}[ht]
+ \caption{Average scores and the ratios of reaching a 32\,768-tile for the networks trained over $200\times 10^9$ steps, evaluated with 1-ply lookahead (greedy) play and with Exxpectimax search with 3-ply and 5-ply lookahead. For each case, mean and standard derivation over five training runs (after $\pm$ sign) are given.}
  \label{table:exp3}
- \small\begin{tabular}{l|l|l|l|l|l|l|l|l|l}
-  \hline \hline
-  & \multicolumn{2}{c}{1-ply (10000 games)} & \multicolumn{2}{c}{3-ply (1000 games)} & \multicolumn{2}{c}{5-ply (100 games)} \\
-  & ave. score & 32768[\%] & ave. score & 32768[\%] & ave. score & 32768[\%] \\
-  \hline
-   NT0 (no VSE) & 300241$\pm$\phantom{0}5922	& 14.3$\pm$\phantom{0}1.7		& 462677$\pm$15573		& 44.3$\pm$\phantom{0}4.7		& 508618$\pm$\phantom{0}15010	& 55.0$\pm$\phantom{0}4.9 \\ \hline
-   NT6 (no VSE) & 304149$\pm$\phantom{0}4361	& 14.9$\pm$\phantom{0}0.4		& 481544$\pm$\phantom{0}5497	& 47.8$\pm$\phantom{0}0.4	& 533801$\pm$\phantom{0}18084	& 61.3$\pm$\phantom{0}5.0 \\ \hline
-   NT7 (2-VSE)	& 342009$\pm$12427		& 19.1$\pm$\phantom{0}2.9		& 491425$\pm$19140		& 46.1$\pm$\phantom{0}5.1		& 550848$\pm$\phantom{0}19390	& 60.5$\pm$\phantom{0}5.1 \\\hline
-   NT8 (3-VSE)	& 355420$\pm$47102		& 15.5$\pm$15.6				& 438702$\pm$91280		& 29.1$\pm$29.1		& 448579$\pm$102127	& 31.5$\pm$32.0 \\\hline
-   NT9 (4-VSE)	& 320205$\pm$\phantom{0}1404	& \phantom{0}0.0$\pm$\phantom{0}0.0	& 360286$\pm$\phantom{0}1446	& \phantom{0}0.0$\pm$\phantom{0}0.0		& 363160$\pm$\phantom{00}1886	& \phantom{0}0.0$\pm$\phantom{0}0.0 \\\hline
- \end{tabular}
+ \centering\includegraphics[width=.99\linewidth]{figures/table-exp3.pdf}
 \end{table}
+
+Looking only at the average scores when combined with 3-ply or 5-ply Expectimax search, \textsf{NT7} was the only network that outperformed \textsf{NT6} and \textsf{NT6-M}.
+For \textsf{NT9}, the addition of search provided almost no improvement in performance. In fact, the generation rate of the 32\,768 tile was 0.0\% in all cases of \textsf{NT9}. This is likely due to overfitting: the lookup table contained too many parameters, causing the network to converge to local optima that fail to reach a 32\,768 tile.
+For \textsf{NT8}, if training was successful (achieving around 400\,000 points in 1-ply play), the combination of Expectimax search further improved performance. However, when training saturated, \textsf{NT8} exhibited behavior similar to \textsf{NT9}, failing to reach a 32\,768 tile. As a result, both the average score and the 32\,768-tile reaching rate showed very large standard deviations.
 
 \subsection{Evaluation of Best N-tuple Networks}
 
@@ -128,25 +119,18 @@ For NT8, if training was successful (achieving around 400\,000 points in 1-ply p
 % 5-ply の探索を組み合わせた場合についても，NT8 と NT6-M との差は7万点と標準偏差と比べて十分に大きな差が得られいる．
 % したがって，VSE を組合せることでタプルサイズを大きくすることは，非常に有効だと結論付ける．
 
-Since NT8, in particular, produced both successful and unsuccessful training outcomes, we conducted an additional evaluation using the best-performing networks for each N-tuple size, excluding NT9.
+Since \textsf{NT8}, in particular, produced both successful and unsuccessful training outcomes, we conducted an additional evaluation using the best-performing networks for each N-tuple size, excluding \textsf{NT9}.
 For each selected network, we ran test plays (10\,000 games with 1-ply lookahead, 1\,000 games with 3-ply, and 100 games with 5-ply) with five different random seeds.
 The results are summarized in Table \ref{table:exp4}.
 
-Using the best networks, the overall ranking was again NT8 $>$ NT7 $>$ NT6 $\approx$ NT6-M.
-For the case combined with 5-ply Expectimax search, the performance gap between NT8 and NT6-M was about 70\,000, which is sufficiently larger than the standard deviation.
+\begin{table}
+ \caption{Average scores and the ratios of reaching a 32\,768-tile for the \emph{best networks} chosen from ones trained over $200\times 10^9$ steps, evaluated with 1-ply lookahead (greedy) play and with Exxpectimax search with 3-ply and 5-ply lookahead. For each case, mean and standard derivation over five \emph{testplay} runs (after $\pm$ sign) are given.}
+ \label{table:exp4}
+ \centering\includegraphics[width=.99\linewidth]{figures/table-exp4.pdf}
+\end{table}
+
+Using the best networks, the overall ranking was again \textsf{NT8} $>$ \textsf{NT7} $>$ \textsf{NT6} $\approx$ \textsf{NT6-M}.
+For the case combined with 5-ply Expectimax search, the performance gap between \textsf{NT8} and \textsf{NT6-M} was about 70\,000, which was sufficiently larger than the standard deviation.
 These results lead us to conclude that combining VSE with larger tuple sizes is highly effective for 2048.
 
-\begin{table}
- \caption{Results of best agents}
- \label{table:exp4}
- \small\begin{tabular}{l|l|l|l|l|l|l|l|l|l}
-  \hline \hline
-  & \multicolumn{2}{c}{1-ply (10000 games)} & \multicolumn{2}{c}{3-ply (1000 games)} & \multicolumn{2}{c}{5-ply (100 games)} \\
-  & ave. score & 32768[\%] & ave. score & 32768[\%] & ave. score & 32768[\%] \\
-  \hline
-   best NT0 (no VSE)	& 311\,354$\pm$1\,971		& 16.9$\pm$0.3	& 484\,281$\pm$5\,435	& 49.0$\pm$1.2	& 517\,595$\pm$17\,160	& 56.2$\pm$5.7 \\\hline
-   best NT6 (no VSE)	& 300\,410$\pm$1\,122		& 14.4$\pm$0.4	& 484\,718$\pm$6\,182	& 48.1$\pm$1.0	& 532\,599$\pm$28\,947	& 58.4$\pm$8.5 \\\hline
-   best NT7 (2-VSE)	& 341\,636$\pm$1\,719		& 19.0$\pm$0.2	& 484\,328$\pm$6\,187	& 44.2$\pm$1.9	& 541\,210$\pm$22\,938	& 56.6$\pm$5.8 \\\hline
-   best NT8 (3-VSE)	& 407\,206$\pm$\phantom{1\,}432 & 30.0$\pm$0.2	& 547\,365$\pm$4\,938	& 57.2$\pm$1.9	& 587\,690$\pm$20\,439	& 66.2$\pm$6.2 \\\hline
- \end{tabular}
-\end{table}
+% LocalWords:  Guei et al VSE Ja skowski lookahead overfitting

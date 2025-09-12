@@ -6,9 +6,9 @@
 \begin{document}
 
  \setlength{\doublerulesep}{.4pt}
-\begin{tabular}{p{1.2cm}l@{~~}r}
+\begin{tabular}{ll@{~~}r}
   \hline\hline
-  name & tuples / value ranges & \makebox[0pt][r]{configurations / parameters} \\\hline
+  name & tuples / value ranges & \makebox[0pt][r]{multi-staging / parameters} \\\hline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textsf{NT6-M}
 &
@@ -20,9 +20,9 @@
 \includegraphics[width=0.9cm]{figures/NTuple-5.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-6.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-7.pdf}
-& with 2 stages \\
+& w/ 2 stages \\
 % (* 18 18 18 18 18 18 2 8) 544195584
-no VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$ (18) & 544\,195\,584 \\ \hline
+w/o VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$\,(18) & 544\,195\,584 \\ \hline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textsf{NT6}
 & 
@@ -35,9 +35,9 @@ no VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$ (18) & 544\,195\,584 \\ \hl
 \includegraphics[width=0.9cm]{figures/NTuple-66.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-67.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-68.pdf}
-& with 2 stages \\
+& w/ 2 stages \\
 % (* 18 18 18 18 18 18 2 9) 612220032
-no VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$ (18) & 612\,220\,032 \\\hline
+w/o VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$\,(18) & 612\,220\,032 \\\hline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textsf{NT7}
 &
@@ -49,10 +49,10 @@ no VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$ (18) & 612\,220\,032 \\\hli
 \includegraphics[width=0.9cm]{figures/NTuple-75.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-76.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-77.pdf}
-& with 2 stages \\
+& w/ 2 stages \\
 % (+ (* 11 11 11 11 11 11 11 2 8)
 %    (* 10 10 10 10 10 10 10 2 8)) 471794736
-2-VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{9}$ (11), $2^{10}$--$2^{17}$ (10)   &  471\,794\,736  \\\hline
+w/ 2-VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{9}$\,(11), $2^{10}$--$2^{17}$\,(10)   &  471\,794\,736  \\\hline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textsf{NT8}
 &
@@ -61,11 +61,11 @@ no VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$ (18) & 612\,220\,032 \\\hli
 \includegraphics[width=0.9cm]{figures/NTuple-82.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-83.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-84.pdf}
-& with 2 stages \\
+& w/ 2 stages \\
 % (+ (*  9  9  9  9  9  9  9  9 2 5)
 %    (*  9  9  9  9  9  9  9  9 2 5)
 %    (*  6  6  6  6  6  6  6  6 2 5)) 877730580
-3-VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{7}$ (9), $2^{8}$--$2^{13}$ (9), $2^{14}$--$2^{17}$ (6) & 877\,730\,580 \\\hline
+w/ 3-VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{7}$\,(9), $2^{8}$--$2^{13}$\,(9), $2^{14}$--$2^{17}$\,(6) & 877\,730\,580 \\\hline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textsf{NT9}
 &
@@ -76,13 +76,15 @@ no VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{17}$ (18) & 612\,220\,032 \\\hli
 \includegraphics[width=0.9cm]{figures/NTuple-94.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-95.pdf}
 \includegraphics[width=0.9cm]{figures/NTuple-96.pdf}
-& with 2 stages\\
+& w/ 2 stages\\
 % (+ (*  7  7  7  7  7  7  7  7 7 2 7)
 %    (*  7  7  7  7  7  7  7  7 7 2 7)
 %    (*  7  7  7  7  7  7  7  7 7 2 7)
 %    (*  6  6  6  6  6  6  6  6 6 2 7)) 1835939238
-4-VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{5}$ (7), $2^{6}$--$2^{9}$ (7), $2^{10}$--$2^{13}$ (7), $2^{14}$--$2^{17}$ (6)    &  1\,835\,939\,238 \\\hline
+w/ 4-VSE & \phantom{\rule{1pt}{9.5pt}} $2^1$--$2^{5}$\,(7), $2^{6}$--$2^{9}$\,(7), $2^{10}$--$2^{13}$\,(7), $2^{14}$--$2^{17}$\,(6)    &  1\,835\,939\,238 \\\hline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \end{tabular}
 
 \end{document}
+
+% LocalWords:  VSE

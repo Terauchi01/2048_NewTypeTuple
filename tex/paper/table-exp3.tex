@@ -1,0 +1,21 @@
+\documentclass[runningheads]{llncs}
+\usepackage{graphicx}
+
+\pagestyle{empty}
+
+\begin{document}
+
+ \setlength{\doublerulesep}{.4pt}
+ \small\begin{tabular}{l|c|c|c|c|c|c}
+  \hline \hline
+  & \multicolumn{2}{c|}{1-ply (10\,000 games)} & \multicolumn{2}{c|}{3-ply (1\,000 games)} & \multicolumn{2}{c}{5-ply (100 games)} \\
+  & \multicolumn{1}{c}{ave. score} & 32\,768[\%] & \multicolumn{1}{c}{ave. score} & 32\,768[\%] & \multicolumn{1}{c}{ave. score} & 32\,768[\%] \\
+  \hline
+   \textsf{NT6-M} w/o VSE	& 300\,241$\pm$\phantom{0}5\,922	& 14.3$\pm$\phantom{0}1.7		& 462\,677$\pm$15\,573			& 44.3$\pm$\phantom{0}4.7		& 508\,618$\pm$\phantom{0}15\,010	& 55.0$\pm$\phantom{0}4.9 \\ \hline
+   \textsf{NT6} w/o VSE		& 304\,149$\pm$\phantom{0}4\,361	& 14.9$\pm$\phantom{0}0.4		& 481\,544$\pm$\phantom{0}5\,497	& 47.8$\pm$\phantom{0}0.4		& 533\,801$\pm$\phantom{0}18\,084	& 61.3$\pm$\phantom{0}5.0 \\ \hline
+   \textsf{NT7} w 2-VSE		& 342\,009$\pm$12\,427			& 19.1$\pm$\phantom{0}2.9		& 491\,425$\pm$19\,140			& 46.1$\pm$\phantom{0}5.1		& 550\,848$\pm$\phantom{0}19\,390	& 60.5$\pm$\phantom{0}5.1 \\\hline
+   \textsf{NT8} w 3-VSE		& 355\,420$\pm$47\,102			& 15.5$\pm$15.6				& 438\,702$\pm$91\,280			& 29.1$\pm$29.1				& 448\,579$\pm$102\,127		    	& 31.5$\pm$32.0 \\\hline
+   \textsf{NT9} w 4-VSE		& 320\,205$\pm$\phantom{0}1\,404	& \phantom{0}0.0$\pm$\phantom{0}0.0	& 360\,286$\pm$\phantom{0}1\,446	& \phantom{0}0.0$\pm$\phantom{0}0.0	& 363\,160$\pm$\phantom{00}1\,886	& \phantom{0}0.0$\pm$\phantom{0}0.0 \\\hline
+ \end{tabular}
+
+\end{document}
