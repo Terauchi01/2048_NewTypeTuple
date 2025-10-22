@@ -4,8 +4,8 @@
 % しかし同時に，タプルのサイズを大きくするたびにパラメータ数が指数的に増加し，必要なメモリと学習時間が膨大になるという深刻な問題を抱えていた．そのため，commodity computer で扱えるタプルサイズは6 または 7 が上限であった．
 % この問題を解決するために，本研究では新しい符号化手法である Vertical Split Encoding (VSE) を提案した。
 In this study, we have proposed a novel approach to designing powerful N-tuple networks for the game 2048.
-Increasing the tuple size of N-tuple networks is expected to enhance the players' performance.
-However, this comes with the severe drawback that the number of parameters and memory requirement grow exponentially with tuple size.  As a result, on commodity computers, the practical upper limit on tuple size had been restricted to six or seven for the game 2048.
+Increasing the size of N-tuple networks is expected to improve the performance of players.
+However, this comes with the severe drawback that the number of parameters and memory requirements grow exponentially with tuple size.  As a result, on commodity computers, the practical upper limit on tuple size had been restricted to six or seven for the game 2048.
 To break through this limitation, we proposed a novel method called Vertical Split Encoding (VSE).
 
 % まずMini2048 を用いた予備実験により，VSE を適用しても性能を大きく損なうことがないことを確認した．
@@ -14,11 +14,11 @@ To break through this limitation, we proposed a novel method called Vertical Spl
 % 特に 8タプル+3-VSE は，5-ply Expectimax 探索で 594,619 という高いスコアを達成した。SOTAプレイヤで用いられていたNT6-M との同条件での比較で約70,000点の差となり，これは標準偏差を十分に上回る有意な差であった。
 % これにより，VSE が大規模 Nタプルネットワークの性能を引き出す有効な手法であることを示した。
 
-A preliminary experiment using Mini2048 confirmed that applying VSE does not cause substantial performance degradation.
+A preliminary experiment using Mini2048 confirmed that the application of VSE does not cause substantial performance degradation.
 We then built and trained 2048 players using N-tuple networks of tuple size six (\textsf{NT6} without VSE), seven (\textsf{NT7} with 2-VSE), eight (\textsf{NT8} with 3-VSE), and nine (\textsf{NT9} with 4-VSE).
-The training results showed that all of \textsf{NT7}, \textsf{NT8}, and \textsf{NT9} networks outperformed the baseline (\textsf{NT6-M}).
+The training results showed that all the \textsf{NT7}, \textsf{NT8} and \textsf{NT9} networks outperformed the baseline (\textsf{NT6-M}).
 In particular, the best player developed with \textsf{NT8} and 3-VSE achieved a high score of 587\,690 with 5-ply Expectimax search. Compared under the same conditions, this was about 70\,000 points higher than that of \textsf{NT6-M}, the network employed in the state-of-the-art player, and the improvement was far exceeding the standard deviation.
-These findings demonstrate that VSE enables the design of N-tuple networks with larger tuple sizes and accordingly improvement of players.
+These findings demonstrate that VSE enables the design of N-tuple networks with larger tuple sizes and, accordingly, the improvement of players.
 
 % 今後の課題として，まず VSE を用いた大きなN-tuple Networksの設計は今回手作業および経験則に基づいている．
 % 実験において，NT7 (3-VSE) の学習が遅いことなど，今回の設計には最適化の余地がありそうである．
@@ -27,8 +27,8 @@ These findings demonstrate that VSE enables the design of N-tuple networks with 
 % これらの改良により，現在の SOTA プレイヤの平均得点 625900 を超えることが我々のゴールである．
 Our future work includes the optimization of the design of large N-tuple networks with VSE, instead of manual heuristics and empirical choices.
 Our experiments suggested that there is room for optimization: for example, the slower learning curve observed for \textsf{NT7} with 2-VSE.
-Another important future work is to address the issue of performance plateau that was seen for NT9.
-The improvement of learning-rate control and the introduction of exploration strategies during the training will be an important next step.
+Another important future work is to address the performance plateau issue that was seen for NT9.
+Improvement of learning rate control and introduction of exploration strategies during training will be an important next step.
 Our ultimate goal is to surpass the current state-of-the-art average score of 625\,377 with these improvements.
 
 

@@ -2,15 +2,15 @@
 
 % 2048 の強いコンピュータプレイヤを作る最も成功した方法は，N タプルネットワークによる評価関数を強化学習によりチューニングするものである。Nタプルネットワークは，盤面の (局所的な) サンプリングとlook-up tableによる評価関数の近似関数である．各N-tupleに対して該当する場所の値をサンプリング・look-up tableから局所評価値を取得し，それら局所評価値を足し合わせることで全体の評価関数を得る．2048では，盤面の対称性から，一つのNタプルに対して8通りのサンプリングを行うことが一般的であり，本研究でもその対称性の利用を採用する．
 The most successful approach to building a strong computer player for 2048 is to use an evaluation function based on N-tuple networks, whose parameters are tuned through reinforcement learning.
-N-tuple networks are function approximators implemented with (local) sampling of the board and corresponding lookup tables.
-For each N-tuple (examples of N-tuples are given in Fig.~\ref{fig:NTupleVSE}), we sample a set of cells corresponding to the tuple elements, retrieve corresponding values from the lookup table, and sum these values up to compute the overall evaluation value.
+N-tuple networks are function approximators implemented with (local) sampling of the board and the corresponding lookup tables.
+For each N-tuple (examples of N-tuples are given in Fig.~\ref{fig:NTupleVSE}), we sample a set of cells corresponding to the tuple elements, retrieve the corresponding values from the lookup table, and sum these values up to compute the overall evaluation value.
 A common practice in 2048 is to perform eight-fold sampling for each N-tuple by exploiting board symmetries~\cite{SzJa14}, and does our study.
 
-Increasing tuple size is expected to yield significant performance improvements.
-Oka and Matsuzaki~\cite{OkMa16} investigated the use of 6- and 7-tuples showing that the use of 7-tuples achieved superior performance. We also confirmed for mini2048 (a $3\times 3$ variant of 2048) that increasing the size of N-tuples yielded performance improvement up to 6-tuples~\cite{TeMa25}.
+Increasing the size of the tuples is expected to yield significant performance improvements.
+Oka and Matsuzaki~\cite{OkMa16} investigated the use of 6- and 7-tuples, showing that the use of 7-tuples achieved superior performance. We also confirmed for mini2048 (a $3\times 3$ variant of 2048) that increasing the size of N-tuples yielded a performance improvement of up to 6-tuples~\cite{TeMa25}.
 
 % ニューラルネットワークと比べて，Nタプルネットワークは高速に評価値を計算することができるものの，一般に必要となるメモリ量が多い．盤面の各セルのとりうる値が $x$ 種類，タプルの数が m，タプルの大きさが n であるとき，look-up table は $m \times x^n$ 要素からなる．2048では，$\mbox{empty}, 2^1, 2^2, \ldots, 2^17$ の$x=18$通りの値をとりうるため，$n$ を増やしたときに必要となるメモリが問題となってしまう．実際，Jaskowski は，(multi-staging を採用できない)7タプルに拡大するよりも，6タプルとmulti-staging を組合せることが有用だと実験で示した．
-Nevertheless, N-tuple networks require a large amount of memory.
+However, N-tuple networks require a large amount of memory.
 When we consider $m$ tuples of size $n$ and each cell on the board can have one of $x$ distinct values, a lookup table consists of $m \times x^n$ entries.
 In 2048, since the number of possible cell values is 18 ($\mbox{empty}, 2^1, 2^2, \ldots, 2^{17}$), the memory requirement becomes an issue as $n$ increases.
 Table~\ref{table:NTupleMemory} summarizes the number of parameters required in a lookup table for a single $n$-tuple and for eight $n$-tuples, when $n$ is between 6 and 9, as well as the memory usage when combining the currently dominant methods of multi-staging~\cite{YWHC16} and Temporal Coherence learning~\cite{Jask18}.
@@ -62,13 +62,13 @@ Therefore, by equating tiles with widely different values, we can reduce the num
 % このとき，一つ目のエンコードでは，$2^{11}$～$2^{17}$の値を持つタイルはすべて L となり，2つ目のエンコードでは
 % $2^{1}$～$2^{10}$ のタイルはすべて S となる．これにより，1つ目のエンコードについては，各セルのとりうる値が $x_1 = 1 + 10 + 1 = 12$ 通り，2つ目のエンコーディングでは $x_2 = 1 + 1 + 7 = 9$ 通りとなり，look-up table の要素数を大きく減少させられる．
 Based on this idea, Vertical Split Encoding maps a board into multiple board instances, in each of which some board cells have the same label.
-Firstly, we define a set of \emph{value ranges} of interest: all the values smaller than this range are replaced with $S$, and all the larger values are replaced with $L$.
+First, we define a set of \emph{value ranges} of interest: All values smaller than this range are replaced by $S$, and all the larger values are replaced by $L$.
 To address the third characteristic mentioned above, we treat empty cells (E) separately.
 
-A concrete example is shown in Fig.~\ref{fig:VSE-example}, where the value ranges of interest are $2^1$--$2^8$ and $2^9$--$2^{17}$.
-In the first mapping, all the tiles with values larger than $2^{8}$ are replaced by $L$.
+A concrete example is shown in Fig.~\ref{fig:VSE-example}, where value ranges of interest are $2^1$--$2^8$ and $2^9$--$2^{17}$.
+In the first mapping, all tiles with values larger than $2^{8}$ are replaced by $L$.
 In the second mapping, all the tiles with values smaller than $2^{9}$ are replaced by $S$.
-After these mapping, the resulting possible values are $[{E}, 2^1, 2^2, 2^3, 2^4, 2^5, 2^6, 2^7, 2^8, {L}]$ in the first mapping and $[{E}, {S}, 2^9, 2^{10}, 2^{11}, 2^{12}, $\break$2^{13}, 2^{14}, 2^{15}, 2^{16}, 2^{17}]$ in the second mapping.
+After these mappings, the resulting possible values are $[{E}, 2^1, 2^2, 2^3, 2^4, 2^5, 2^6, 2^7, 2^8, {L}]$ in the first mapping and $[{E}, {S}, 2^9, 2^{10}, 2^{11}, 2^{12}, $\break$2^{13}, 2^{14}, 2^{15}, 2^{16}, 2^{17}]$ in the second mapping.
 As a result, the numbers of possible values are $x_1 = 10$ and $x_2 = 11$, respectively, which significantly reduces the memory requirement for the lookup tables.
 
 \begin{figure}

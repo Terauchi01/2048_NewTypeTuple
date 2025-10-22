@@ -3,23 +3,23 @@
 2048 is a single-player stochastic game played on a $4 \times 4$ grid.
 The objective of the original game is to reach a 2048-tile by moving and merging
 the tiles on the board according to the rules below.
-In an initial state, two tiles are placed randomly each with a number 2 (with probability $0.9$) or 4 (with probability $0.1$).
-The player selects a direction (either up, right, down, or left), and then all the tiles will move in the selected direction.
-When two tiles of the same number collide, they create a tile with the sum value and the player gets the sum as the score.
-The merges occur from the far side and newly created tiles do not merge again on the same move: move to the right from \verb*|222 |, \verb*| 422| and \verb*|2222| results in
+In an initial state, two tiles are randomly placed each with a number 2 (with probability $0.9$) or 4 (with probability $0.1$).
+The player selects a direction (either up, right, down, or left), and then all tiles move in the selected direction.
+When two tiles of the same number collide, they create a tile with the sum value, and the player gets the sum as the score.
+The merges occur from the far side and newly created tiles do not merge again on the same move: moving to the right from \verb*|222 |, \verb*| 422| and \verb*|2222| results in
 \verb*|  24|, \verb*|  44|, and \verb*|  44|, respectively.
-Note that the player cannot select a direction in which no tiles move nor merge.
-After each move, a new tile appears randomly at an empty cell with a number 2 (with probability $0.9$) or 4 (with probability $0.1$).
+Note that the player cannot select a direction in which the tiles do not move or merge.
+After each move, a new tile appears randomly in an empty cell with number 2 (with probability $0.9$) or 4 (with probability $0.1$).
 If the player cannot move the tiles in any direction, the game ends.
 
 Fig.~\ref{fig:states-and-afterstates} depicts the process of the game.
 Selecting right at the state $s_t$ in Fig.~\ref{fig:states-and-afterstates}, the tiles move to the right and
-two 2-tiles and two 8-tiles merge adding the score 4 + 16 = 20.
+two 2-tiles and two 8-tiles merge, adding the score 4 + 16 = 20.
 Then, a new tile appears to reach the next state $s_{t+1}$.
 
 \begin{figure}
   \centering\includegraphics[width=.8\linewidth]{figures/state_afterstate.pdf}
- \caption{Process of game 2048}
+ \caption{Process of the game 2048}
  \label{fig:states-and-afterstates}
 \end{figure}
 
@@ -29,7 +29,7 @@ Since a turn in 2048 consists of two steps, we introduce the two notions, called
  \item An \emph{afterstate} $s'_t$ is a board (and score) after the slide-and-merge step and before a new tile appears.
 \end{itemize}
 
-For better understanding of the performance of the players, Table~\ref{table:achievement} summarizes the common score achieved and the common number of moves needed when the player reaches a tile of a specific value.
+For a better understanding of the performance of the players, Table~\ref{table:achievement} summarizes the common score achieved and the common number of moves needed when the player reaches a tile of a specific value.
 
 \begin{table}
  \caption{Score and number of moves when a tile is first created}

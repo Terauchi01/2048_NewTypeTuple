@@ -6,9 +6,9 @@
 % すでに完全解析されており，理論的な最高期待値は5469？点だと分かっている．
 % 著者らの先行研究において，様々な大きさのN-tupleを設計・実験し，盤面の半分以上をカバーする7タプルまで性能向上が見られることを示した．
 
-We first conducted evaluations of VSE using mini2048, a smaller variant of 2048, to gain insights of how much the application of VSE degrades the performance and of which factors of VSE affect the performance.
-Mini2048 is a smaller variant of 2048 where the game rules are identical to 2048 except for the board size being $3\times 3$.
-We chose Mini2048 as the testbed of our preliminary experiments for two reasons: it was strongly solved (a.k.a. perfectly analyzed)~\cite{YaKN22,TeKM23} and the expected score of the optimal play is known to be 5468.49; we confirmed in our previous work~\cite{TeMa25} that enlarging the size of N-tuple yielded better performance up to 6-tuples.
+We first conducted VSE evaluations using mini2048, a smaller variant of 2048, to gain insight into how much the application of VSE degrades the performance and of which factors of VSE affect performance.
+Mini2048 is a smaller variant of 2048 where the game rules are identical to 2048 except that the board size is $3\times 3$.
+We chose Mini2048 as the testbed of our preliminary experiments for two reasons: it was strongly solved (a.k.a. perfectly analyzed)~\cite{YaKN22,TeKM23} and the expected score of the optimal play is known to be 5468.49; we confirmed in our previous work~\cite{TeMa25} that enlarging the size of the N-tuple yielded better performance up to 6-tuples.
 
 % 実験では，m-NT6 を例にとり，複数の value ranges の組合せによる VSE を行ったときのプレイヤの性能を調べる．
 % ここでは，最大3つに分割する VSE を複数試す．ここで調べたいことは以下の3つである．
@@ -22,12 +22,12 @@ We chose Mini2048 as the testbed of our preliminary experiments for two reasons:
  \centering\includegraphics[]{figures/mNT-table.pdf}
 \end{table}
 
-In the preliminary experiments, we used two manually designed N-tuple networks in Table~\ref{table:mNT}: \textsf{mNT6} with two 6-tuples and \textsf{mNT4} with three 4-tuples. We applied multiple VSEs on \textsf{mNT6}.
-The main questions we wished to examine were the following:
+In preliminary experiments, we used two manually designed N-tuple networks in Table~\ref{table:mNT}: \textsf{mNT6} with two 6-tuples and \textsf{mNT4} with three 4-tuples. We applied multiple VSEs on \textsf{mNT6}.
+The main questions that we wanted to examine were the following:
 \begin{itemize}
- \item To what extent does VSE degrade the performance?
+ \item To what extent does VSE degrade performance?
  \item Should we have overlaps between value ranges when splitting?
- \item Which factor of VSE affects the performance most strongly?
+ \item Which factor of VSE affects performance most strongly?
 \end{itemize}
 
 
@@ -35,11 +35,11 @@ The main questions we wished to examine were the following:
 % 学習は，OI=1200 で初期化したTC学習とし，$5\times10^8$ steps だけ学習させる．
 % 10個の異なるseedsを用いた学習から得られる10個のプレイヤにgreedy に？？ゲームプレイさせたときの平均得点を調べる．
 
-For each configuration, we trained N-tuple networks using Temporal Coherence learning with Optimistic Initialization~\cite{GuCW22} (initial value 1200) for $5\times 10^8$ steps.  After the training, we played 1\,000 games with 1-ply lookahead (the greedy play), and evaluate the performance in terms of the average score.  To mitigate the effect of randomness, we conducted each training with 10 different random seeds.
+For each configuration, we trained N-tuple networks using Temporal Coherence learning with Optimistic Initialization~\cite{GuCW22} (initial value 1200) for $5\times 10^8$ steps.  After the training, we played 1\,000 games with 1-ply lookahead (the greedy play) and evaluated the performance in terms of the average score.  To mitigate the effect of randomness, we conducted each training with 10 different random seeds.
 Table~\ref{table:pre-results} summarizes the configurations of VSEs and the average score of the trained N-tuple networks.
 
 \begin{table}
-\caption{Configurations of preliminary experiments for mini2048 and the average score for 1000 games with 1-ply lookahead. The number in parentheses after each value range shows the number of possible values after corresponding mapping. For average scores, mean and standard deviation over 10 training runs (after the $\pm$ sign) are given.}
+\caption{Configurations of preliminary experiments for mini2048 and the average score for 1000 games with the 1-ply lookahead. The numbers in parentheses after value ranges show the number of possible values after the corresponding mapping. For average scores, the mean and standard deviation over 10 training runs are given (after the $\pm$ sign).}
 \label{table:pre-results}
  \setlength{\doublerulesep}{.4pt}
  \centering\begin{tabular}{l|l|p{170pt}|r|r}
@@ -75,13 +75,13 @@ Table~\ref{table:pre-results} summarizes the configurations of VSEs and the aver
 % 性能に最も影響するのは，一番小さなrangeに含まれる要素数である．
 % 一番小さな range に含まれる要素数が同じであれば，それより上のrangeをさらに分割してもしなくても大差ないようだ．
 
-The results in Table~\ref{table:pre-results} were highly promising.
-All the results from \textsf{mNT6} plus VSEs outperformed that of \textsf{mNT4}.
-While applying VSE degrades the performance (for the case of \textsf{mNT6}, $<$5\%) in general, the N-tuple networks with 2-VSE-D was slightly better than the original \textsf{mNT6} without VSE.
-From the results of 2-VSE-A, 2-VSE-B, and 2-VSE-C as well as 3-VSE-A and 3-VSE-B, we found that it was not necessary to introduce overlaps between value ranges---this was contrary to the authors' initial assumption.
+The results in Table~\ref{table:pre-results} were very promising.
+All the results from \textsf{mNT6} plus VSEs outperformed those of \textsf{mNT4}.
+Although the application of VSE degrades performance (for the case of \textsf{mNT6}, $<$5\%) in general, the N-tuple networks with 2-VSE-D were slightly better than the original \textsf{mNT6} without VSE.
+From the results of 2-VSE-A, 2-VSE-B and 2-VSE-C, as well as 3-VSE-A and 3-VSE-B, we found that it was not necessary to introduce overlaps between the value ranges; this was contrary to the initial assumption of the authors.
 The factor with the greatest impact on performance was the number of elements included in the smallest value range as seen in 2-VSE-C, 2-VSE-D, and 2-VSE-E
 If the size of the smallest range was the same, then further splitting of higher ranges appeared to make little difference as seen in 2-VSE-E, 3-VSE-A, and 4-VSE-A.
 
-We will use these findings in the design of VSEs for original 2048.
+We will use these findings in the design of the VSEs for the original 2048.
 
 % LocalWords:  VSE testbed mNT VSEs lookahead
