@@ -1,0 +1,24 @@
+#ifndef __TDPLAYER2SYMMETRIC_H__
+#define __TDPLAYER2SYMMETRIC_H__
+
+typedef bool alldir_bool[4];
+typedef board_t alldir_board[4];
+typedef int alldir_int[4];
+
+void init_tuple(char** argv);
+void output_ev(int suffix);
+
+class TDPlayer {
+public:
+  board_t lastBoard;
+  bool firstTurn;
+
+  void gameStart();
+  enum move_dir selectHand(const board_t &board,
+			   const alldir_bool &canMoves,
+			   const alldir_board &nextBoards,
+			   const alldir_int &scores);
+  void gameEnd();
+};
+
+#endif

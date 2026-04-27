@@ -49,4 +49,7 @@ experiments.txt
 *.bak
 playgame_VSE
 playgame.cpp
-Makefile_VSE
+*Makefile_VSE
+*dat/
+*log*
+*learning_*
