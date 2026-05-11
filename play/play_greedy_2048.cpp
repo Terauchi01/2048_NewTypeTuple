@@ -12,18 +12,73 @@
 #include <list>
 #include <mutex>
 #include <random>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
 using namespace std;
 namespace fs = std::filesystem;
-#include "../head/game2048.h"
-#include "../head/symmetric.h"
-#include "../head/tdplayer_VSE_symmetric2.h"
-#include "../head/util.h"
+// #include "../head/game2048.h"
+// #include "../head/symmetric.h"
+// #include "../head/tdplayer_VSE_symmetric2.h"
+// #include "../head/util.h"
+
+#include "../head_double/game2048.h"
+#include "../head_double/symmetric.h"
+#include "../head_double/tdplayer_VSE_symmetric2.h"
+#include "../head_double/util.h"
 
 // tdplayer functions used from tdplayer_VSE_symmetric2.cpp
 extern int calcEvFiltered(const board_t &board);
+
+static bool ends_with(const char* s, const char* suffix) {
+  if (!s || !suffix) return false;
+  size_t sl = strlen(s);
+  size_t su = strlen(suffix);
+  if (sl < su) return false;
+  return memcmp(s + (sl - su), suffix, su) == 0;
+}
+
+static std::string shell_escape_single_quotes(const char* path) {
+  // POSIX sh: wrap with single quotes, escape embedded single quotes as: '\''
+  std::string out;
+  out.reserve(strlen(path) + 2);
+  out.push_back('\'');
+  for (const char* p = path; *p; ++p) {
+    if (*p == '\'') {
+      out += "'\\''";
+    } else {
+      out.push_back(*p);
+    }
+  }
+  out.push_back('\'');
+  return out;
+}
+
+struct EvStream {
+  FILE* fp;
+  bool is_pipe;
+};
+
+static EvStream open_ev_stream(const char* evfile) {
+  if (ends_with(evfile, ".xz")) {
+    std::string cmd = "xz -dc -- ";
+    cmd += shell_escape_single_quotes(evfile);
+    FILE* p = popen(cmd.c_str(), "r");
+    return EvStream{p, true};
+  }
+  FILE* f = fopen(evfile, "rb");
+  return EvStream{f, false};
+}
+
+static void close_ev_stream(EvStream s) {
+  if (!s.fp) return;
+  if (s.is_pipe) {
+    pclose(s.fp);
+  } else {
+    fclose(s.fp);
+  }
+}
 
 #define NUM_STAGES 2
 #define STAGE_THRESHOLD 14
@@ -160,33 +215,31 @@ FileParams parseFileName(const char* filename) {
 }
 
 bool read_ev(const char* evfile) {
-  FILE *fp;
-
-  fp = fopen(evfile, "rb");
-  if (!fp) {
-    perror("fopen for reading");
+  EvStream stream = open_ev_stream(evfile);
+  if (!stream.fp) {
+    perror("open evfile for reading");
     return false;
   }
 
   // タプルごとに ARRAY_LENGTH 個を読み込む
   int *buf = (int*)malloc(sizeof(int) * ARRAY_LENGTH);
   if (!buf) {
-    fclose(fp);
+    close_ev_stream(stream);
     return false;
   }
 
   for (int s = 0; s < NUM_STAGES; s++) {
     for (int f = 0; f < NUM_SPLIT; f++) {
       for (int t = 0; t < NUM_TUPLE; t++) {
-        size_t read_items = fread(buf, sizeof(int), ARRAY_LENGTH, fp);
+        size_t read_items = fread(buf, sizeof(int), ARRAY_LENGTH, stream.fp);
         if (read_items != (size_t)ARRAY_LENGTH) {
-          if (feof(fp)) {
+          if (feof(stream.fp)) {
             printf("Unexpected end of file while reading stage=%d, filter=%d, tuple=%d\\n", s, f, t);
           } else {
             perror("fread");
           }
           free(buf);
-          fclose(fp);
+          close_ev_stream(stream);
           return false;
         }
 
@@ -199,7 +252,7 @@ bool read_ev(const char* evfile) {
   }
 
   free(buf);
-  fclose(fp);
+  close_ev_stream(stream);
   printf("Successfully loaded evaluation values from %s\\n", evfile);
   return true;
 }
@@ -224,13 +277,14 @@ int main(int argc, char** argv) {
   fs::create_directory(dir);
   fs::path abs_path = fs::absolute(dir);
 
-  // FILE* fp = fopen(evfile, "rb");
-  FILE* test_fp = fopen(evfile, "rb");
-  if (!test_fp) {
-    fprintf(stderr, "Error: Cannot open file %s\n", evfile);
-    exit(1);
+  {
+    EvStream test_stream = open_ev_stream(evfile);
+    if (!test_stream.fp) {
+      fprintf(stderr, "Error: Cannot open file %s\n", evfile);
+      exit(1);
+    }
+    close_ev_stream(test_stream);
   }
-  fclose(test_fp);
 
   if (!read_ev(evfile)) {
     fprintf(stderr, "Failed to load evaluation file: %s\n", evfile);
@@ -316,7 +370,13 @@ int main(int argc, char** argv) {
 
       // record after-state
       after_state_list.push_back(array<int,9>{board[0],board[1],board[2],board[3],board[4],board[5],board[6],board[7],board[8]});
-      eval_list.push_back(array<double, eval_length>{(double)ev[0],ev[1],ev[2],ev[3],(double)progress_calculation(board)});
+        eval_list.push_back(array<double, eval_length>{
+          (double)ev[0],
+          (double)ev[1],
+          (double)ev[2],
+          (double)ev[3],
+          (double)progress_calculation(board),
+        });
 
       // add random tile
       int empty[16]; int ec = 0;
