@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <random>
 #include <cstring>
 using namespace std;
@@ -135,8 +136,13 @@ void output_ev(int seed,int suffix) {
         memset(buf, 0, sizeof(int) * ARRAY_LENGTH);
 
         for (int a = 0; a < ARRAY_LENGTH; a++) {
+	  if (Updatecounts[s][f][t][a] < UC_CLIP) {
+	    buf[a] = -EV_INIT;
+	  } else {
+	    buf[a] = Evs[s][f][t][a];
+	  }
           // Aerrs が 0 のときはチェックして除算を避ける
-	  buf[a] = Evs[s][f][t][a] * Updatecounts[s][f][t][a]/(UC_CLIP)+(-EV_INIT)*(UC_CLIP-Updatecounts[s][f][t][a])/UC_CLIP;
+	  // buf[a] = Evs[s][f][t][a] * Updatecounts[s][f][t][a]/(UC_CLIP)+(-EV_INIT)*(UC_CLIP-Updatecounts[s][f][t][a])/UC_CLIP;
         }
 
         size_t written = fwrite(buf, sizeof(int), ARRAY_LENGTH, fp);
@@ -220,7 +226,7 @@ void debugFilteredBoards(const board_t &board) {
 
 // フィルターで評価値を合計する関数
 int calcEvFiltered(const board_t &board) {
-  int ev = 0;
+  long long int ev = 0;
   int stage = get_stage(board);
   board_t filtered_boards[NUM_SPLIT];
   
@@ -249,6 +255,12 @@ int calcEvFiltered(const board_t &board) {
       }
     // }
   }
+
+  if ((int)ev != ev) {
+    printf("ev overflow happened\n");
+    exit(1);
+  }
+
   return ev;
 }
 // デバッグ用: 指定した盤面の詳細情報を表示
@@ -338,9 +350,15 @@ static void learningUpdate(const board_t& before, int delta)
         //   Evs[stage][f][base][index] += q10_raw_from_double(stage_delta * ALPHA);
         // } else {
           // Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta *  ALPHA * (abs(Errs[stage][f][base][index]) / Aerrs[stage][f][base][index]));
-	  Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta * alpha);
-
-        // }
+	int org = Evs[stage][f][base][index];
+	Evs[stage][f][base][index] += q10_raw_from_double_trunc(stage_delta * alpha);
+	// if (Evs[stage][f][base][index] < -100000*1024) {
+	//   printBoard(before);
+	//   printf("org %d stage %d f %d base %d index %d delta %d stage_delta %f after %d\n",
+	// 	 org, stage, f, base, index, delta, stage_delta, Evs[stage][f][base][index]);
+	//   exit(1);
+	// }
+	  // }
         //AerrsとErrsは小数点なし
         Updatecounts[stage][f][base][index] = min(UC_CLIP,Updatecounts[stage][f][base][index]+1);
       }
@@ -362,13 +380,27 @@ void learning(const board_t &before, const board_t &after, int rewards)
   printf("After state:\n");
   debugFilteredBoards(after);
 #endif
-  
+
+  // if (delta < -217908700) {
+  //   printBoard(before);
+  //   printBoard(after);
+  //   printf("thisEvV %d nextEvV %d delta %d\n", thisEvV, nextEvV, delta);
+  //   exit(1);
+  // }
+      
   learningUpdate(before, delta);
 }  
 void learningLast(const board_t &before)
 {
   const int thisEvV = calcEvFiltered(before);
   const int delta = (0 << SIFT) + (0 - thisEvV); // V(S)とV'(S)の差分（1/1024単位）
+
+  // if (delta < -1000000) {
+  //   printBoard(before);
+  //   printf("endgame thisEvV %d delta %d\n", thisEvV, delta);
+  //   exit(1);
+  // }
+
   learningUpdate(before, delta);
 }
 

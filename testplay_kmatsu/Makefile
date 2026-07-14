@@ -1,71 +1,104 @@
-.phony: clean test help learn build-0 build-6 build-7 build-8 build-9 learn-6 learn-7 learn-8 learn-9 run-6 run-7 run-8 run-9 check-runs clean-logs stop-runs
+.PHONY: clean default \
+	build-0 build-6 build-7 build-8 build-9 \
+	build-log-0 build-log-6 build-log-7 build-log-8 build-log-9
 
-# Detect OS name for conditional flags
+# =========================================================
+# OS detection
+# =========================================================
 UNAME_S := $(shell uname -s)
 
-# コンパイラの選択：macOSではclang++、LinuxではG++
 ifeq ($(UNAME_S),Darwin)
-  CXX = clang++
-  CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head
-  LFLAGS = -pthread -std=c++20
+	CXX = clang++
+	CFLAGS = -pthread -std=c++20 -W -Wall -O3 -I../head
+	LFLAGS = -pthread -std=c++20
 else
-  CXX = g++
-  CFLAGS = -pthread -std=c++2a -W -Wall -O3 -I../head
-  LFLAGS = -pthread -std=c++2a
+	CXX = g++
+	CFLAGS = -pthread -std=c++2a -W -Wall -O3 -I../head
+	LFLAGS = -pthread -std=c++2a
 endif
 
 ifeq ($(UNAME_S),Linux)
-  CFLAGS += -mcmodel=large -march=native
-  LFLAGS += -mcmodel=large -march=native
+	CFLAGS += -mcmodel=large -march=native
+	LFLAGS += -mcmodel=large -march=native
 endif
 
+# debug
+CFLAGS += -DDEBUG_PLAY
+
 default:
-	echo "do nothing"
+	@echo "usage:"
+	@echo "  make build-6"
+	@echo "  make build-log-6"
 
-%.o:%.cpp
-	$(CXX) $(CFLAGS) -c $<
+# =========================================================
+# normal expectimax build
+# =========================================================
 
-# 依存関係
-test_expectimax.o: test_expectimax
-game2048_VSE.o: game2048_VSE.cpp ../head/game2048.h
-tdplayer_VSE_symmetric.o: tdplayer_VSE_symmetric2.cpp ../head/tdplayer_VSE_symmetric2.h ../head/symmetric.h ../head/game2048.h ../head/util.h ../head/selected_6_tuples.h ../head/selected_7_tuples.h ../head/selected_8_tuples.h ../head/selected_9_tuples.h
-symmetric.o: symmetric.cpp ../head/symmetric.h ../head/game2048.h
-playgame.o: playgame.cpp ../head/game2048.h ../head/symmetric.h ../head/tdplayer2symmetric.h ../head/util.h
-playgame_VSE.o: playgame_VSE.cpp ../head/game2048.h ../head/symmetric.h ../head/tdplayer_VSE_symmetric2.h ../head/util.h
-game2048.o: game2048.cpp ../head/game2048.h
-
-# 異なるタプルファイルでビルド
 build-0:
-	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=0
-	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=0
-	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=0
-	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=0
-	$(CXX) $(LFLAGS) -o test_expectimax_0 test_expectimax.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(MAKE) build TARGET=0 SRC=test_expectimax.cpp OUT=test_expectimax_0
 
 build-6:
-	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=6
-	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=6
-	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=6
-	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=6
-	$(CXX) $(LFLAGS) -o test_expectimax_6 test_expectimax.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(MAKE) build TARGET=6 SRC=test_expectimax.cpp OUT=test_expectimax_6
 
 build-7:
-	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=7
-	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=7
-	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=7
-	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=7
-	$(CXX) $(LFLAGS) -o test_expectimax_7 test_expectimax.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(MAKE) build TARGET=7 SRC=test_expectimax.cpp OUT=test_expectimax_7
 
 build-8:
-	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=8
-	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=8
-	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=8
-	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=8
-	$(CXX) $(LFLAGS) -o test_expectimax_8 test_expectimax.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(MAKE) build TARGET=8 SRC=test_expectimax.cpp OUT=test_expectimax_8
 
 build-9:
-	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=9
-	$(CXX) $(CFLAGS) -c tdplayer_VSE_symmetric2.cpp -DTUPLE_FILE_TYPE=9
-	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=9
-	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=9
-	$(CXX) $(LFLAGS) -o test_expectimax_9 test_expectimax.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+	$(MAKE) build TARGET=9 SRC=test_expectimax.cpp OUT=test_expectimax_9
+
+# =========================================================
+# withlog build
+# =========================================================
+
+build-log-0:
+	$(MAKE) build TARGET=0 SRC=test_expectimax_withlog.cpp OUT=test_expectimax_withlog_0
+
+build-log-6:
+	$(MAKE) build TARGET=6 SRC=test_expectimax_withlog.cpp OUT=test_expectimax_withlog_6
+
+build-log-7:
+	$(MAKE) build TARGET=7 SRC=test_expectimax_withlog.cpp OUT=test_expectimax_withlog_7
+
+build-log-8:
+	$(MAKE) build TARGET=8 SRC=test_expectimax_withlog.cpp OUT=test_expectimax_withlog_8
+
+build-log-9:
+	$(MAKE) build TARGET=9 SRC=test_expectimax_withlog.cpp OUT=test_expectimax_withlog_9
+
+# =========================================================
+# common build rule
+# =========================================================
+
+build:
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=$(TARGET) -c $(SRC) -o main_$(TARGET).o
+
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=$(TARGET) \
+		-c tdplayer_VSE_symmetric2.cpp \
+		-o tdplayer_$(TARGET).o
+
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=$(TARGET) \
+		-c symmetric.cpp \
+		-o symmetric_$(TARGET).o
+
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=$(TARGET) \
+		-c game2048.cpp \
+		-o game2048_$(TARGET).o
+
+	$(CXX) $(LFLAGS) \
+		-o $(OUT) \
+		main_$(TARGET).o \
+		tdplayer_$(TARGET).o \
+		symmetric_$(TARGET).o \
+		game2048_$(TARGET).o
+
+# =========================================================
+# clean
+# =========================================================
+
+clean:
+	rm -f *.o
+	rm -f test_expectimax_*
+	rm -f test_expectimax_withlog_*

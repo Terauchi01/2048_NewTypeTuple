@@ -28,6 +28,11 @@ namespace fs = std::filesystem;
 #include "../head_double/tdplayer_VSE_symmetric2.h"
 #include "../head_double/util.h"
 
+// #include "../head_double/game2048.h"
+// #include "../head_double/symmetric.h"
+// #include "../head_double/tdplayer_VSE_symmetric2.h"
+// #include "../head_double/util.h"
+
 // tdplayer functions used from tdplayer_VSE_symmetric2.cpp
 extern int calcEvFiltered(const board_t &board);
 
