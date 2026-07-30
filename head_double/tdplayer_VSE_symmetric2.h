@@ -11,6 +11,11 @@ typedef int alldir_int[4];
 void init_tuple();
 void output_ev(int seed, int suffix);
 void input_ev(const char* filename);
+bool input_ev_for_learning(const char* filename);
+bool output_learning_state(const char* dat_filename, long long step_count,
+                           int loop_count, int last_log);
+bool input_learning_state(const char* dat_filename, long long* step_count,
+                          int* loop_count, int* last_log);
 
 class TDPlayer {
   int train_count;

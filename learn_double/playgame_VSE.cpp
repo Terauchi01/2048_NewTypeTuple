@@ -96,6 +96,14 @@ inline void logger(int score)
       minS = 99999999;
       logcount = 0;
       output_ev(seed, lastlog);
+#ifdef PLAYGAME_VSE_RESUME
+      char dat_filename[1024];
+      sprintf(dat_filename, "dat/tuples%d-seed%d-VSE-count%03d.dat",
+              TUPLE_FILE_TYPE, seed, lastlog);
+      mtx_for_loopcount.lock();
+      output_learning_state(dat_filename, stepCount, loopCount, lastlog);
+      mtx_for_loopcount.unlock();
+#endif
     }
   }
   mtx_for_logger.unlock();
@@ -225,12 +233,20 @@ void run_tdlearning(int seed)
 }
 
 void usage() {
+#ifdef PLAYGAME_VSE_RESUME
+  fprintf(stderr, "playgame_VSE_resume seed dat_file\n");
+#else
   fprintf(stderr, "playgame_VSE seed\n");
+#endif
 }
 
 int main(int argc, char** argv)
 {
+#ifdef PLAYGAME_VSE_RESUME
+  if (argc != 3) {  // program name + seed + checkpoint
+#else
   if (argc != 2) {  // プログラム名 + seed の2つの引数のみ
+#endif
     usage(); exit(1);
   }
   seed = atoi(argv[1]);
@@ -240,6 +256,16 @@ int main(int argc, char** argv)
     
   init_movetable();
   init_tuple();  // 全てのタプルを使用するため引数不要
+#ifdef PLAYGAME_VSE_RESUME
+  if (!input_ev_for_learning(argv[2])) {
+    fprintf(stderr, "learning was not started\n");
+    return 1;
+  }
+  if (!input_learning_state(argv[2], &stepCount, &loopCount, &lastlog)) {
+    fprintf(stderr, "learning was not started\n");
+    return 1;
+  }
+#endif
   printf("initialization finished\n");
 
   std::vector<std::thread> ths;

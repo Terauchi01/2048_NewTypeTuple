@@ -1,6 +1,9 @@
 #include <cstdio>
+#include <cerrno>
+#include <cstdint>
 #include <random>
 #include <cstring>
+#include <string>
 using namespace std;
 #include "game2048.h"
 #include "symmetric.h"
@@ -157,6 +160,215 @@ void output_ev(int seed,int suffix) {
 
   free(buf);
   fclose(fp);
+}
+
+bool input_ev_for_learning(const char* filename) {
+  FILE *fp = fopen(filename, "rb");
+  if (!fp) {
+    perror(filename);
+    return false;
+  }
+
+  constexpr size_t EvsCount =
+      size_t(NUM_STAGES) * NUM_SPLIT * NUM_TUPLE * ARRAY_LENGTH;
+  constexpr long long expectedBytes =
+      static_cast<long long>(EvsCount) * sizeof(double);
+
+  if (fseek(fp, 0, SEEK_END) != 0) {
+    perror("fseek");
+    fclose(fp);
+    return false;
+  }
+  const long fileBytes = ftell(fp);
+  if (fileBytes < 0 || static_cast<long long>(fileBytes) != expectedBytes) {
+    fprintf(stderr,
+            "invalid dat size: %s (expected %lld bytes, got %ld bytes)\n",
+            filename, expectedBytes, fileBytes);
+    fclose(fp);
+    return false;
+  }
+  rewind(fp);
+
+  const size_t readCount =
+      fread(&Evs[0][0][0][0], sizeof(double), EvsCount, fp);
+  if (readCount != EvsCount) {
+    fprintf(stderr, "failed to read dat: %s (%zu/%zu values)\n",
+            filename, readCount, EvsCount);
+    fclose(fp);
+    return false;
+  }
+  if (fclose(fp) != 0) {
+    perror("fclose");
+    return false;
+  }
+
+  // Errs/Aerrs/Updatecounts are not stored in the legacy dat format.
+  // Treat loaded values as already learned while restarting optimizer history.
+  fill_n(&Errs[0][0][0][0], EvsCount, 1e-12);
+  fill_n(&Aerrs[0][0][0][0], EvsCount, 1e-12);
+  fill_n(&Updatecounts[0][0][0][0], EvsCount, 1);
+  printf("loaded learning values from %s (%zu doubles)\n",
+         filename, EvsCount);
+  return true;
+}
+
+namespace {
+constexpr char LEARNING_STATE_MAGIC[8] = {'V', 'S', 'E', 'S', 'T', 'A', 'T', 'E'};
+constexpr uint32_t LEARNING_STATE_VERSION = 1;
+
+struct LearningStateHeader {
+  char magic[8];
+  uint32_t version;
+  uint32_t tuple_file_type;
+  uint64_t num_stages;
+  uint64_t num_split;
+  uint64_t num_tuple;
+  uint64_t array_length;
+  int64_t step_count;
+  int64_t loop_count;
+  int64_t last_log;
+};
+
+string state_filename(const char* dat_filename) {
+  return string(dat_filename) + ".state";
+}
+
+bool write_block(FILE* fp, const void* data, size_t item_size,
+                 size_t item_count, const char* name) {
+  if (fwrite(data, item_size, item_count, fp) == item_count) return true;
+  fprintf(stderr, "failed to write %s to learning state\n", name);
+  return false;
+}
+
+bool read_block(FILE* fp, void* data, size_t item_size,
+                size_t item_count, const char* name) {
+  if (fread(data, item_size, item_count, fp) == item_count) return true;
+  fprintf(stderr, "failed to read %s from learning state\n", name);
+  return false;
+}
+}  // namespace
+
+bool output_learning_state(const char* dat_filename, long long step_count,
+                           int loop_count, int last_log) {
+  const string filename = state_filename(dat_filename);
+  const string temporary = filename + ".tmp";
+  FILE* fp = fopen(temporary.c_str(), "wb");
+  if (!fp) {
+    perror(temporary.c_str());
+    return false;
+  }
+
+  const LearningStateHeader header = {
+      {'V', 'S', 'E', 'S', 'T', 'A', 'T', 'E'},
+      LEARNING_STATE_VERSION,
+      TUPLE_FILE_TYPE,
+      NUM_STAGES,
+      NUM_SPLIT,
+      NUM_TUPLE,
+      ARRAY_LENGTH,
+      step_count,
+      loop_count,
+      last_log,
+  };
+  constexpr size_t count =
+      size_t(NUM_STAGES) * NUM_SPLIT * NUM_TUPLE * ARRAY_LENGTH;
+
+  bool ok =
+      write_block(fp, &header, sizeof(header), 1, "header") &&
+      write_block(fp, &Errs[0][0][0][0], sizeof(double), count, "Errs") &&
+      write_block(fp, &Aerrs[0][0][0][0], sizeof(double), count, "Aerrs") &&
+      write_block(fp, &Updatecounts[0][0][0][0], sizeof(int), count,
+                  "Updatecounts");
+  if (fclose(fp) != 0) {
+    perror("fclose");
+    ok = false;
+  }
+  if (!ok) {
+    remove(temporary.c_str());
+    return false;
+  }
+  if (rename(temporary.c_str(), filename.c_str()) != 0) {
+    perror("rename learning state");
+    remove(temporary.c_str());
+    return false;
+  }
+
+  printf("saved learning state to %s\n", filename.c_str());
+  return true;
+}
+
+bool input_learning_state(const char* dat_filename, long long* step_count,
+                          int* loop_count, int* last_log) {
+  const string filename = state_filename(dat_filename);
+  FILE* fp = fopen(filename.c_str(), "rb");
+  if (!fp) {
+    if (errno != ENOENT) {
+      perror(filename.c_str());
+      return false;
+    }
+    fprintf(stderr,
+            "warning: %s was not found; optimizer history and counters "
+            "start from zero\n",
+            filename.c_str());
+    return true;
+  }
+
+  constexpr size_t count =
+      size_t(NUM_STAGES) * NUM_SPLIT * NUM_TUPLE * ARRAY_LENGTH;
+  constexpr long long expected_bytes =
+      sizeof(LearningStateHeader) +
+      static_cast<long long>(count) *
+          (sizeof(double) + sizeof(double) + sizeof(int));
+  if (fseek(fp, 0, SEEK_END) != 0) {
+    perror("fseek");
+    fclose(fp);
+    return false;
+  }
+  const long file_bytes = ftell(fp);
+  if (file_bytes < 0 ||
+      static_cast<long long>(file_bytes) != expected_bytes) {
+    fprintf(stderr,
+            "invalid learning state size: %s "
+            "(expected %lld bytes, got %ld bytes)\n",
+            filename.c_str(), expected_bytes, file_bytes);
+    fclose(fp);
+    return false;
+  }
+  rewind(fp);
+
+  LearningStateHeader header{};
+  if (!read_block(fp, &header, sizeof(header), 1, "header")) {
+    fclose(fp);
+    return false;
+  }
+  if (memcmp(header.magic, LEARNING_STATE_MAGIC, sizeof(header.magic)) != 0 ||
+      header.version != LEARNING_STATE_VERSION ||
+      header.tuple_file_type != TUPLE_FILE_TYPE ||
+      header.num_stages != NUM_STAGES ||
+      header.num_split != NUM_SPLIT ||
+      header.num_tuple != NUM_TUPLE ||
+      header.array_length != ARRAY_LENGTH) {
+    fprintf(stderr, "incompatible learning state: %s\n", filename.c_str());
+    fclose(fp);
+    return false;
+  }
+
+  const bool ok =
+      read_block(fp, &Errs[0][0][0][0], sizeof(double), count, "Errs") &&
+      read_block(fp, &Aerrs[0][0][0][0], sizeof(double), count, "Aerrs") &&
+      read_block(fp, &Updatecounts[0][0][0][0], sizeof(int), count,
+                 "Updatecounts");
+  if (fclose(fp) != 0) {
+    perror("fclose");
+    return false;
+  }
+  if (!ok) return false;
+
+  *step_count = header.step_count;
+  *loop_count = static_cast<int>(header.loop_count);
+  *last_log = static_cast<int>(header.last_log);
+  printf("loaded learning state from %s\n", filename.c_str());
+  return true;
 }
 
 // ステージ判定関数：STAGE_THRESHOLD以上の値があるかでステージを決定
