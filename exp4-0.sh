@@ -45,7 +45,25 @@ runtime="${SCRIPT_DIR}/testplay_double/test_expectimax_${tuple}"
 data_dir="${SCRIPT_DIR}/learn_result"
 start_seed="${ST}0000"
 
-MAX_JOBS=${MAX_JOBS:-5}
+# MAX_JOBSが環境変数で指定されていない場合、
+# タプル数に応じて同時実行数を設定する
+if [ -z "${MAX_JOBS+x}" ]; then
+    case "$tuple" in
+        6)
+            MAX_JOBS=5
+            ;;
+        7)
+            MAX_JOBS=5
+            ;;
+        8)
+            MAX_JOBS=3
+            ;;
+        9)
+            MAX_JOBS=2
+            ;;
+    esac
+fi
+
 DRY_RUN=${DRY_RUN:-0}
 
 if [[ ! "$MAX_JOBS" =~ ^[1-9][0-9]*$ ]]; then
