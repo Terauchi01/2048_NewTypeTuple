@@ -1,4 +1,4 @@
-.phony: clean test help learn build-0 build-6 build-7 build-8 build-9 learn-6 learn-7 learn-8 learn-9 run-6 run-7 run-8 run-9 check-runs clean-logs stop-runs build-0-dg build-6-dg build-7-dg build-8-dg build-9-dg
+.phony: clean test help learn build-0 build-6 build-7 build-8 build-9 build-6-parallel build-7-parallel build-8-parallel build-9-parallel learn-6 learn-7 learn-8 learn-9 run-6 run-7 run-8 run-9 check-runs clean-logs stop-runs build-0-dg build-6-dg build-7-dg build-8-dg build-9-dg
 
 # Detect OS name for conditional flags
 UNAME_S := $(shell uname -s)
@@ -69,6 +69,20 @@ build-9:
 	$(CXX) $(CFLAGS) -c symmetric.cpp -DTUPLE_FILE_TYPE=9
 	$(CXX) $(CFLAGS) -c game2048.cpp -DTUPLE_FILE_TYPE=9
 	$(CXX) $(LFLAGS) -o test_expectimax_9 test_expectimax.o tdplayer_VSE_symmetric2.o symmetric.o game2048.o
+
+PARALLEL_SOURCES = test_expectimax_parallel.cpp tdplayer_VSE_symmetric2.cpp symmetric.cpp game2048.cpp
+
+build-6-parallel:
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=6 $(PARALLEL_SOURCES) -o test_expectimax_parallel_6
+
+build-7-parallel:
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=7 $(PARALLEL_SOURCES) -o test_expectimax_parallel_7
+
+build-8-parallel:
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=8 $(PARALLEL_SOURCES) -o test_expectimax_parallel_8
+
+build-9-parallel:
+	$(CXX) $(CFLAGS) -DTUPLE_FILE_TYPE=9 $(PARALLEL_SOURCES) -o test_expectimax_parallel_9
 
 build-0-dg:
 	$(CXX) $(CFLAGS) -c test_expectimax.cpp -DTUPLE_FILE_TYPE=0 -DDOWNGRADING

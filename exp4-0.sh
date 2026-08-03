@@ -17,6 +17,7 @@
 #   MAX_JOBS:   maximum simultaneous expectimax processes
 #   DEPTHS:      space-separated depths to run (default: 1 2 3 4 5)
 #   JOB_LOG_DIR: if set, also save each data-file/depth job to a separate log
+#   RUNTIME:      expectimax executable (default: test_expectimax_TUPLE)
 
 set -u
 set -o pipefail
@@ -50,7 +51,10 @@ SCRIPT_DIR=$(
     pwd
 )
 
-runtime="${SCRIPT_DIR}/testplay_double/test_expectimax_${tuple}"
+runtime=${RUNTIME:-"${SCRIPT_DIR}/testplay_double/test_expectimax_${tuple}"}
+if [[ "$runtime" != /* ]]; then
+    runtime="${SCRIPT_DIR}/${runtime}"
+fi
 data_dir=${DATA_DIR:-"${SCRIPT_DIR}/learn_result"}
 data_count=${DATA_COUNT:-200}
 start_seed="${ST}0000"
