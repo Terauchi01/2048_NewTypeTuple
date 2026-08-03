@@ -16,6 +16,7 @@ bool output_learning_state(const char* dat_filename, long long step_count,
                            int loop_count, int last_log);
 bool input_learning_state(const char* dat_filename, long long* step_count,
                           int* loop_count, int* last_log);
+double calcEvFiltered(const board_t& board);
 
 class TDPlayer {
   int train_count;

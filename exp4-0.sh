@@ -222,14 +222,27 @@ else
     )
     shopt -u nullglob
 
-    declare -A seen_inputs=()
+    declare -A input_by_seed=()
     for candidate in "${candidates[@]}"; do
-        input_key=${candidate%.xz}
-        if [ -z "${seen_inputs[$input_key]+x}" ]; then
-            dat_files+=("$candidate")
-            seen_inputs[$input_key]=1
+        candidate_name=$(basename "$candidate")
+        if [[ "$candidate_name" =~ ^tuples${tuple}-seed([0-9]+)-VSE-count${data_count}\.dat(\.xz)?$ ]]; then
+            seed=${BASH_REMATCH[1]}
+            # Uncompressed candidates are listed first, so prefer .dat when
+            # both .dat and .dat.xz exist for the same seed.
+            if [ -z "${input_by_seed[$seed]+x}" ]; then
+                input_by_seed[$seed]=$candidate
+            fi
         fi
     done
+
+    if [ "${#input_by_seed[@]}" -gt 0 ]; then
+        mapfile -t sorted_seeds < <(
+            printf '%s\n' "${!input_by_seed[@]}" | sort -n
+        )
+        for seed in "${sorted_seeds[@]}"; do
+            dat_files+=("${input_by_seed[$seed]}")
+        done
+    fi
 fi
 
 if [ "${#dat_files[@]}" -eq 0 ]; then

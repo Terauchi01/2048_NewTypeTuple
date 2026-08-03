@@ -20,7 +20,6 @@ namespace fs = std::filesystem;
 #include "tdplayer_VSE_symmetric2.h"
 #include "util.h"
 
-extern int calcEvFiltered(const board_t &board);
 extern double expectimaxPlay(
     int depth,
     const board_t& board,
@@ -341,7 +340,7 @@ void run_test_expectimax(int search_depth,
       // calc ev
       // =========================
 
-      int ev[4] = {0, 0, 0, 0};
+      double ev[4] = {0, 0, 0, 0};
 
       for (int d = 0; d < 4; d++) {
 
