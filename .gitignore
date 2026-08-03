@@ -20,9 +20,11 @@ a.out
 *.dSYM/
 *.pdb
 core
+testplay_kmatsu/test_expectimax_*
 
 # エディタ・IDE関連
 *~
+.#*
 *.swp
 *.swo
 .vscode/
@@ -41,12 +43,77 @@ bin/
 
 # ログファイル
 *.log
+result*
 experiments.txt
+board_data
+resend_count004_logs
+rsync_count004_logs
+run_logs
+learn_double/logs
+learn_double/dat
+learn_double/download
+
 
 # その他の一時ファイル
 *.tmp
 *.temp
 *.bak
+*.nfs*
+
+# Python のキャッシュ・ローカル環境
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# 実験・解析で生成されるデータ
+*.csv
+*.csv.sources
+analysis_results*.json
+average.txt
+first_end_scores.csv
+max_tile.txt
+maxtile.txt
+tile_reach_turn*.txt
+top3_line.txt
+test_exp1-*.txt
+
+# 生成されたグラフと解析結果
+graphs/
+graphs.tar.gz
+/tex/paper/figures/**/*.pdf
+testplay_result*/
+learn_result/
+
+# 名前に拡張子を持たないコンパイル済みバイナリ
+/analyze_line2
+/analyze_score_transition
+/analyze_success_at_step
+/analyze_tile
+/analyze_tile_reach_turn
+/analyze_top8_positions
+/eanalyze_tile
+/extract_final_scores
+/learn/og
+/learn/playgame_VSE_*
+/learn_double/playgame_VSE_*
+/play/play_greedy_*
+/testplay_double/test_expectimax_*
+/testplay_kmatsu/test
+/testplay_kmatsu/test[0-9]*
+/testplay_kmatsu/testplay_*
+
+# LaTeX の中間生成物（成果物の PDF は除外しない）
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
 playgame_VSE
 playgame.cpp
 *Makefile_VSE
