@@ -1,0 +1,15 @@
+CXX ?= g++
+CXXFLAGS ?= -O3 -march=native -std=c++17 -Wall -Wextra -Wpedantic
+
+.PHONY: all test clean
+
+all: exact_second_32768
+
+exact_second_32768: exact_second_32768.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+test: exact_second_32768
+	./exact_second_32768 --self-test
+
+clean:
+	rm -f exact_second_32768
