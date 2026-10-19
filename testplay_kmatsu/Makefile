@@ -2,7 +2,7 @@
 	build-0 build-6 build-7 build-8 build-9 \
 	build-log-0 build-log-6 build-log-7 build-log-8 build-log-9 \
 	beam build-beam build-beam-6 test-beam test-beam-afterstate \
-	build-beam-afterstate-6
+	build-beam-afterstate-6 build-beam-afterstate-runner-6
 
 # Beam Search experiments use the requested 6-tuple evaluator by default.
 TARGET ?= 6
@@ -63,6 +63,12 @@ test-beam:
 build-beam-afterstate-6:
 	$(CXX) $(BEAM_CFLAGS) -DTUPLE_FILE_TYPE=6 \
 		test_beam_search_afterstate_runner.cpp beam_search_afterstate.cpp \
+		beam_search.cpp double_evaluator.cpp game2048.cpp \
+		$(BEAM_LFLAGS) -o test_beam_search_afterstate_6
+
+build-beam-afterstate-runner-6:
+	$(CXX) $(BEAM_CFLAGS) -DTUPLE_FILE_TYPE=6 \
+		run_beam_search_afterstate.cpp beam_search_afterstate.cpp \
 		beam_search.cpp double_evaluator.cpp game2048.cpp \
 		$(BEAM_LFLAGS) -o test_beam_search_afterstate_6
 

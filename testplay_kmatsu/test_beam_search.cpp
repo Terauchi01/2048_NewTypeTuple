@@ -1,4 +1,10 @@
+#ifdef BEAM_AFTERSTATE_RUNNER
+#include "beam_search_afterstate.h"
+#define BEAM_SEARCH_FUNCTION search_afterstate
+#else
 #include "beam_search.h"
+#define BEAM_SEARCH_FUNCTION search
+#endif
 #include "double_evaluator.h"
 
 #include <algorithm>
@@ -121,7 +127,7 @@ GameOutcome run_game(std::uint32_t game_seed, const beam2048::Config& config,
     const auto start = std::chrono::steady_clock::now();
     beam2048::Result result;
     try {
-      result = beam2048::search(
+      result = beam2048::BEAM_SEARCH_FUNCTION(
           board, config,
           [&evaluator](const beam2048::Board& candidate) {
             return evaluator.evaluate(candidate);
@@ -365,3 +371,5 @@ int main(int argc, char** argv) {
   if (timed_out.load()) return 124;
   return failed.load() ? EXIT_FAILURE : EXIT_SUCCESS;
 }
+
+#undef BEAM_SEARCH_FUNCTION
