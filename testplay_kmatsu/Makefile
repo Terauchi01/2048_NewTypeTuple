@@ -1,7 +1,8 @@
 .PHONY: clean default \
 	build-0 build-6 build-7 build-8 build-9 \
 	build-log-0 build-log-6 build-log-7 build-log-8 build-log-9 \
-	beam build-beam build-beam-6 test-beam
+	beam build-beam build-beam-6 test-beam test-beam-afterstate \
+	build-beam-afterstate-6
 
 # Beam Search experiments use the requested 6-tuple evaluator by default.
 TARGET ?= 6
@@ -58,6 +59,18 @@ test-beam:
 		test_beam_search_unit.cpp beam_search.cpp double_evaluator.cpp game2048.cpp \
 		$(LFLAGS) -o beam_search_unit_tests
 	./beam_search_unit_tests
+
+build-beam-afterstate-6:
+	$(CXX) $(BEAM_CFLAGS) -DTUPLE_FILE_TYPE=6 \
+		test_beam_search_afterstate_runner.cpp beam_search_afterstate.cpp \
+		beam_search.cpp double_evaluator.cpp game2048.cpp \
+		$(BEAM_LFLAGS) -o test_beam_search_afterstate_6
+
+test-beam-afterstate:
+	$(CXX) $(CFLAGS) -UDEBUG_PLAY -DTUPLE_FILE_TYPE=6 \
+		test_beam_search_afterstate.cpp beam_search_afterstate.cpp \
+		beam_search.cpp game2048.cpp $(LFLAGS) -o beam_search_afterstate_tests
+	./beam_search_afterstate_tests
 
 # =========================================================
 # normal expectimax build
@@ -131,4 +144,5 @@ clean:
 	rm -f *.o
 	rm -f test_expectimax_0 test_expectimax_6 test_expectimax_7 test_expectimax_8 test_expectimax_9
 	rm -f test_expectimax_withlog_0 test_expectimax_withlog_6 test_expectimax_withlog_7 test_expectimax_withlog_8 test_expectimax_withlog_9
-	rm -f test_beam_search_6 beam_search_unit_tests
+	rm -f test_beam_search_6 beam_search_unit_tests beam_search_afterstate_tests
+	rm -f test_beam_search_afterstate_6
