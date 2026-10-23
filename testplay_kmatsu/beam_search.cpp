@@ -288,6 +288,8 @@ std::string_view width_policy_name(WidthPolicy policy) {
       return "fixed";
     case WidthPolicy::Sqrt:
       return "sqrt";
+    case WidthPolicy::SqrtBudget:
+      return "sqrt_budget";
     case WidthPolicy::Cbrt:
       return "cbrt";
     case WidthPolicy::Power:
@@ -317,6 +319,10 @@ std::size_t policy_width_limit(const Config& config, std::size_t layer_depth,
         throw std::invalid_argument("fixed beam width must be positive");
       }
       return std::min(config.width, config.fixed_width);
+    case WidthPolicy::SqrtBudget:
+      if (config.width_budget == 0)
+        throw std::invalid_argument("sqrt-budget width budget must be positive");
+      return retention_limit(config.width_budget, config.width);
     case WidthPolicy::Sqrt:
       if (layer_depth >= std::numeric_limits<std::size_t>::digits) {
         return config.width;

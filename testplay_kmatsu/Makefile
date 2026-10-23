@@ -2,7 +2,9 @@
 	build-0 build-6 build-7 build-8 build-9 \
 	build-log-0 build-log-6 build-log-7 build-log-8 build-log-9 \
 	beam build-beam build-beam-6 test-beam test-beam-afterstate \
-	build-beam-afterstate-6 build-beam-afterstate-runner-6
+	build-beam-afterstate-6 build-beam-afterstate-runner-6 build-evaluator-audit test-beam-afterstate-optimization build-beam-parallel-benchmark \
+	build-beam-afterstate-runner-7 build-beam-afterstate-runner-8 build-beam-afterstate-runner-9 \
+	build-evaluator-audit-7 build-evaluator-audit-8 build-evaluator-audit-9
 
 # Beam Search experiments use the requested 6-tuple evaluator by default.
 TARGET ?= 6
@@ -44,6 +46,17 @@ default:
 # Beam Search (6-tuple)
 # =========================================================
 
+# Link the actual double expectimax implementation for evaluator diagnostics.
+build-beam-parallel-benchmark:
+	$(CXX) $(BEAM_CFLAGS) benchmark_parallel_afterstate.cpp beam_search_afterstate.cpp \
+		beam_search.cpp double_evaluator.cpp game2048.cpp $(BEAM_LFLAGS) -o benchmark_parallel_afterstate_6
+
+build-evaluator-audit:
+	$(CXX) -I../head_double $(BEAM_CFLAGS) -DTUPLE_FILE_TYPE=6 \
+		audit_evaluator.cpp ../testplay_double/tdplayer_VSE_symmetric2.cpp \
+		beam_search_afterstate.cpp beam_search.cpp double_evaluator.cpp game2048.cpp \
+		$(BEAM_LFLAGS) -o audit_evaluator_6
+
 beam: build-beam-6
 
 build-beam-6:
@@ -71,6 +84,25 @@ build-beam-afterstate-runner-6:
 		run_beam_search_afterstate.cpp beam_search_afterstate.cpp \
 		beam_search.cpp double_evaluator.cpp game2048.cpp \
 		$(BEAM_LFLAGS) -o test_beam_search_afterstate_6
+
+build-beam-afterstate-runner-7 build-beam-afterstate-runner-8 build-beam-afterstate-runner-9:
+	$(CXX) $(BEAM_CFLAGS) -DTUPLE_FILE_TYPE=$(lastword $(subst -, ,$@)) \
+		run_beam_search_afterstate.cpp beam_search_afterstate.cpp beam_search.cpp double_evaluator.cpp game2048.cpp \
+		$(BEAM_LFLAGS) -o test_beam_search_afterstate_$(lastword $(subst -, ,$@))
+
+build-evaluator-audit-7 build-evaluator-audit-8 build-evaluator-audit-9:
+	$(CXX) -I../head_double $(BEAM_CFLAGS) -DTUPLE_FILE_TYPE=$(lastword $(subst -, ,$@)) \
+		audit_evaluator.cpp ../testplay_double/tdplayer_VSE_symmetric2.cpp beam_search_afterstate.cpp \
+		beam_search.cpp double_evaluator.cpp game2048.cpp $(BEAM_LFLAGS) \
+		-o audit_evaluator_$(lastword $(subst -, ,$@))
+
+
+test-beam-afterstate-optimization:
+	$(CXX) $(BEAM_CFLAGS) -I. -Dsearch_afterstate=search_afterstate_baseline \
+		-c ../comparison/baseline_afterstate.cpp -o afterstate_baseline.o
+	$(CXX) $(BEAM_CFLAGS) test_afterstate_optimization.cpp beam_search_afterstate.cpp \
+		beam_search.cpp game2048.cpp afterstate_baseline.o $(BEAM_LFLAGS) -o afterstate_optimization_tests
+	./afterstate_optimization_tests
 
 test-beam-afterstate:
 	$(CXX) $(CFLAGS) -UDEBUG_PLAY -DTUPLE_FILE_TYPE=6 \
@@ -151,4 +183,4 @@ clean:
 	rm -f test_expectimax_0 test_expectimax_6 test_expectimax_7 test_expectimax_8 test_expectimax_9
 	rm -f test_expectimax_withlog_0 test_expectimax_withlog_6 test_expectimax_withlog_7 test_expectimax_withlog_8 test_expectimax_withlog_9
 	rm -f test_beam_search_6 beam_search_unit_tests beam_search_afterstate_tests
-	rm -f test_beam_search_afterstate_6
+	rm -f test_beam_search_afterstate_6 audit_evaluator_6 afterstate_optimization_tests

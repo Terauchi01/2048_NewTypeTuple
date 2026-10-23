@@ -10,7 +10,17 @@
 #include <stdexcept>
 #include <utility>
 
+namespace tuple_definition {
+#if TUPLE_FILE_TYPE == 6
 #include "../head/selected_6_tuples_sym.h"
+#elif TUPLE_FILE_TYPE == 7
+#include "../head/selected_7_tuples_sym.h"
+#elif TUPLE_FILE_TYPE == 8
+#include "../head/selected_8_tuples_sym.h"
+#elif TUPLE_FILE_TYPE == 9
+#include "../head/selected_9_tuples_sym.h"
+#endif
+}
 
 namespace beam2048 {
 namespace {
@@ -57,10 +67,10 @@ void set_error(std::string* error, std::string message) {
   if (error != nullptr) *error = std::move(message);
 }
 
-std::size_t table_offset(int stage, int tuple, int index) {
-  return (static_cast<std::size_t>(stage) * DoubleTupleEvaluator6::kTuples +
+std::size_t table_offset(int stage, int split, int tuple, int index) {
+  return ((static_cast<std::size_t>(stage) * DoubleTupleEvaluator::kSplits + split) * DoubleTupleEvaluator::kTuples +
           static_cast<std::size_t>(tuple)) *
-             DoubleTupleEvaluator6::kArrayLength +
+             DoubleTupleEvaluator::kArrayLength +
          static_cast<std::size_t>(index);
 }
 
@@ -152,14 +162,14 @@ bool load_exact_doubles(const std::string& path, std::size_t expected_count,
   return true;
 }
 
-bool DoubleTupleEvaluator6::load(const std::string& path, std::string* error) {
+bool DoubleTupleEvaluator::load(const std::string& path, std::string* error) {
   table_.clear();
   return load_exact_doubles(path, kValueCount, table_, error);
 }
 
-double DoubleTupleEvaluator6::evaluate(const Board& board) const {
+double DoubleTupleEvaluator::evaluate(const Board& board) const {
   if (!loaded()) {
-    throw std::logic_error("double 6-tuple evaluator is not loaded");
+    throw std::logic_error("double tuple evaluator is not loaded");
   }
 
   int stage = 0;
@@ -170,17 +180,41 @@ double DoubleTupleEvaluator6::evaluate(const Board& board) const {
     }
   }
 
+#if TUPLE_FILE_TYPE == 6
+static const unsigned char filter_mapping[1][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 }
+  };
+#elif TUPLE_FILE_TYPE == 7
+static const unsigned char filter_mapping[2][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 10, 10, 10, 10 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+  };
+#elif TUPLE_FILE_TYPE == 8
+static const unsigned char filter_mapping[3][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5 }
+  };
+#elif TUPLE_FILE_TYPE == 9
+static const unsigned char filter_mapping[4][18] = {
+    { 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6 },
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5 }
+  };
+#endif
+  int filtered[NUM_SPLIT][16];
+  for (int f=0;f<NUM_SPLIT;++f) for (int i=0;i<16;++i)
+    filtered[f][i]=filter_mapping[f][std::clamp(board[i],0,17)];
   double result = 0.0;
-  for (int symmetric_tuple = 0; symmetric_tuple < UNROLL_COUNT;
-       ++symmetric_tuple) {
-    int index = 0;
-    for (int tile_index = 0; tile_index < TUPLE_SIZE; ++tile_index) {
-      const int board_index = posSym[symmetric_tuple][tile_index];
-      const int tile = std::clamp(board[board_index], 0, 17);
-      index = index * VARIATION_TILE + tile;
+  for (int symmetric_tuple=0;symmetric_tuple<UNROLL_COUNT;++symmetric_tuple) {
+    for (int f=0;f<NUM_SPLIT;++f) {
+      int index=0;
+      for (int k=0;k<TUPLE_SIZE;++k)
+        index=index*VARIATION_TILE+filtered[f][tuple_definition::posSym[symmetric_tuple][k]];
+      const int tuple=symmetric_tuple%NUM_TUPLE;
+      result+=table_.data()[table_offset(stage,f,tuple,index)];
     }
-    const int tuple = symmetric_tuple % NUM_TUPLE;
-    result += table_.data()[table_offset(stage, tuple, index)];
   }
   return result;
 }

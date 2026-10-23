@@ -7,6 +7,8 @@ namespace beam2048 {
 
 // Expectimax-style beam search that evaluates and prunes only afterstates.
 // Depth counts player afterstates; chance spawns do not consume a ply.
+// The evaluator must be deterministic within a search; identical afterstates
+// reuse its value. The cache does not merge distinct probability paths.
 Result search_afterstate(const board_t& board, const Config& config,
                          const Evaluator& evaluator);
 

@@ -29,16 +29,29 @@ struct DoubleBuffer {
 bool load_exact_doubles(const std::string& path, std::size_t expected_count,
                         DoubleBuffer& output, std::string* error = nullptr);
 
-class DoubleTupleEvaluator6 {
+#ifndef TUPLE_FILE_TYPE
+#define TUPLE_FILE_TYPE 6
+#endif
+class DoubleTupleEvaluator {
  public:
   static constexpr std::size_t kStages = 2;
-  static constexpr std::size_t kSplits = 1;
-  static constexpr std::size_t kTuples = 9;
-  static constexpr std::size_t kTileVariations = 18;
-  static constexpr std::size_t kTupleSize = 6;
-  static constexpr std::size_t kArrayLength =
-      kTileVariations * kTileVariations * kTileVariations *
-      kTileVariations * kTileVariations * kTileVariations;
+  static constexpr int kTupleType = TUPLE_FILE_TYPE;
+#if TUPLE_FILE_TYPE == 6
+  static constexpr std::size_t kSplits=1, kTuples=9, kTileVariations=18, kTupleSize=6;
+#elif TUPLE_FILE_TYPE == 7
+  static constexpr std::size_t kSplits=2, kTuples=8, kTileVariations=11, kTupleSize=7;
+#elif TUPLE_FILE_TYPE == 8
+  static constexpr std::size_t kSplits=3, kTuples=5, kTileVariations=9, kTupleSize=8;
+#elif TUPLE_FILE_TYPE == 9
+  static constexpr std::size_t kSplits=4, kTuples=7, kTileVariations=7, kTupleSize=9;
+#else
+#error "Supported tuple types: 6, 7, 8, 9"
+#endif
+  static constexpr std::size_t kArrayLength = [] {
+    std::size_t count=1;
+    for (std::size_t i=0;i<kTupleSize;++i) count*=kTileVariations;
+    return count;
+  }();
   static constexpr std::size_t kValueCount =
       kStages * kSplits * kTuples * kArrayLength;
   static constexpr std::size_t kByteCount = kValueCount * sizeof(double);
@@ -53,6 +66,9 @@ class DoubleTupleEvaluator6 {
  private:
   DoubleBuffer table_;
 };
+
+// Compatibility for existing 6-tuple callers; new code uses the generic name.
+using DoubleTupleEvaluator6 = DoubleTupleEvaluator;
 
 }  // namespace beam2048
 

@@ -120,3 +120,15 @@ playgame.cpp
 *dat/
 *log*
 *learning_*
+
+# Local trained datasets and experiment executables
+/learn/dat
+/learn_double/count004_2e11
+/learn_double/miacp_789_*/
+/testplay_kmatsu/test_beam_search_[0-9]*
+/testplay_kmatsu/test_beam_search_afterstate_[0-9]*
+/testplay_kmatsu/audit_evaluator_[0-9]*
+/testplay_kmatsu/benchmark_parallel_afterstate_[0-9]*
+/testplay_kmatsu/beam_search_unit_tests
+/testplay_kmatsu/beam_search_afterstate_tests
+/testplay_kmatsu/afterstate_optimization_tests

@@ -19,6 +19,7 @@ using Evaluator = std::function<double(const Board&)>;
 enum class WidthPolicy {
   Fixed,
   Sqrt,
+  SqrtBudget,
   Cbrt,
   Power,
   Increasing,
@@ -41,6 +42,8 @@ struct Config {
   int reward_scale = 1;
   WidthPolicy width_policy = WidthPolicy::Fixed;
   std::size_t fixed_width = 1;
+  // Width-control budget for SqrtBudget; depth/time limits stop the search.
+  std::uint64_t width_budget = 100000;
   double alpha = 0.5;
   double initial_width = 1.0;
   double width_ratio = 2.0;
@@ -89,6 +92,8 @@ struct Result {
   std::array<bool, 4> legal{false, false, false, false};
   SearchStatus status = SearchStatus::Completed;
   Stats stats{};
+  int max_depth_reached = 0;
+  bool frontier_exhausted = false;
 };
 
 Board make_board(const board_t& board);
