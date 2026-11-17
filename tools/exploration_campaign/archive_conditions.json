@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "conditions": {
+    "B": {
+      "label": "開始要求50%",
+      "cli_condition": "B",
+      "behavior": "greedy",
+      "archive_start_policy": "requests",
+      "archive_request_probability": 0.5,
+      "target_archive_step_ratio": null,
+      "archive_source_update": false
+    },
+    "Bprime": {
+      "label": "開始要求50%＋保存元更新",
+      "cli_condition": "Bprime",
+      "behavior": "greedy",
+      "archive_start_policy": "requests",
+      "archive_request_probability": 0.5,
+      "target_archive_step_ratio": null,
+      "archive_source_update": true
+    },
+    "Bdoubleprime": {
+      "label": "steps均衡archive（Step-50）",
+      "cli_condition": "Bdoubleprime",
+      "behavior": "greedy",
+      "archive_start_policy": "steps",
+      "archive_request_probability": null,
+      "target_archive_step_ratio": 0.5,
+      "archive_source_update": false
+    }
+  },
+  "common": {
+    "archive_mode": "random128",
+    "source_uses": 128,
+    "promote32_percent": 20,
+    "promote64_percent_strictly_greater": 50,
+    "learning_step_origin": "actual original start; includes every restart in that family",
+    "source_failure": "fallback to normal; its steps count toward normal",
+    "learning_clock": "existing learning-step units including terminal turns; extra saved-source TD updates logged separately",
+    "cumulative_steps_policy": "prefer the side with fewer completed steps; ties prefer fewer in-flight families then a saved alternating cursor",
+    "ratio_limitations": "a 50% archive-step target is not guaranteed during source starvation or with unfinished multiworker families",
+    "automatic_launch": false
+  },
+  "comparison": {
+    "B_vs_Bprime": "effect of updating the saved source afterstate once per archive family",
+    "B_vs_Bdoubleprime": "effect of allocating learning steps instead of requesting archive starts with probability 0.5"
+  }
+}
