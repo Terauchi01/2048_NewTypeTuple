@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "effective_date": "2026-11-17",
+  "authority": "user instruction",
+  "allowed_compute_hosts": ["i02", "i03", "i04", "i05", "i06", "i07", "i08", "i09", "i10", "i11", "i12"],
+  "accepted_aliases": {"i2": "i02", "i3": "i03", "i4": "i04", "i5": "i05", "i6": "i06", "i7": "i07", "i8": "i08", "i9": "i09"},
+  "gateway": "gw: workspace files and lightweight control only; no training, benchmark or large build",
+  "scope": ["training", "evaluation", "benchmark", "validation", "aggregation", "launch", "resume", "migration", "SSH monitoring"],
+  "historical_host_authorizations_superseded": true,
+  "aliases_or_ip_bypass_allowed": false,
+  "existing_out_of_scope_jobs": "Report; do not stop or delete without instructions and preservation checks.",
+  "expansion_requires_new_user_instruction": true
+}
