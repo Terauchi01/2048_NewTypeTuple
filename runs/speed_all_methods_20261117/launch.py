@@ -22,12 +22,11 @@ from resource_guard import available
 
 HERE = Path(__file__).resolve().parent
 PROJECT = HERE.parent.parent
-RELEASE = PROJECT / 'runs/fullfloat_ttas_saveable_20261116'
+RELEASE = PROJECT / 'runs/online_archive_optional_20261117'
 BINARY = RELEASE / 'build/bin/learn9_ttas'
 SOURCE = RELEASE / 'source'
-SOURCE_SHA = '76428313e6c6728559db14ee84225dca15b2c00cf29bec8103ca3b811e2db11c'
-BINARY_SHA = 'd04836898c652a7eb3213298aec399ea5b43c76befeff39b3213ecc80231eabd'
-DEFAULT_MANIFEST = PROJECT / 'runs/archive_readiness_20261112/donor_pools/train_manifest.txt'
+SOURCE_SHA = '054b141693774cdb8eb6fe35e013c3476deb695ace3242640ea44e034e97c704'
+BINARY_SHA = '89b39e34e70d74551c2f1e8350752a20bb240f35803cc58d4319e14c6044a4f9'
 METHODS = {
     'A': ('tc-ucb', 'paper', None),
     'B': ('greedy', 'paper', 'B'),
@@ -99,7 +98,7 @@ def main(argv=None):
     p.add_argument('--seed', required=True, type=nonnegative)
     p.add_argument('--steps', required=True, type=positive)
     p.add_argument('--output-dir', required=True, type=Path)
-    p.add_argument('--pool-manifest', type=Path)
+    p.add_argument('--pool-manifest', type=Path, help='optional bootstrap data; omitted for online collection from normal games')
     p.add_argument('--resume-full', type=Path)
     p.add_argument('--feature-cache-mib', type=int, choices=(16, 32), default=16)
     p.add_argument('--first-checkpoint-step', type=positive, default=1000000)
@@ -162,11 +161,13 @@ def main(argv=None):
     if condition is None:
         cmd += ['--start-pool-per-million', '0']
     else:
-        manifest = (a.pool_manifest or DEFAULT_MANIFEST).expanduser().resolve()
-        if not manifest.is_file():
-            p.error('archive manifest does not exist')
-        cmd += ['--archive-mode', 'random128', '--start-pool-manifest', str(manifest),
-                '--start-pool-manifest-sha256', sha(manifest)]
+        cmd += ['--archive-mode', 'random128']
+        if a.pool_manifest is not None:
+            manifest = a.pool_manifest.expanduser().resolve()
+            if not manifest.is_file():
+                p.error('archive manifest does not exist')
+            cmd += ['--start-pool-manifest', str(manifest),
+                    '--start-pool-manifest-sha256', sha(manifest)]
         if condition == 'C':
             cmd += ['--archive-start-policy', 'requests', '--start-pool-per-million', '500000',
                     '--archive-source-update', '1']

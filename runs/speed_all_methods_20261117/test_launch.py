@@ -52,13 +52,24 @@ def main():
             assert field(cmd, '--archive-source-update') == '1'
         else:
             assert field(cmd, '--archive-condition') == condition
+        assert '--start-pool-manifest' not in cmd
+        assert '--start-pool-manifest-sha256' not in cmd
+        if method != 'A':
+            manifest = launch.PROJECT / 'runs/archive_readiness_20261112/donor_pools/train_manifest.txt'
+            output = io.StringIO()
+            with patch.object(launch, 'verify_release'), contextlib.redirect_stdout(output):
+                assert launch.main(args + ['--pool-manifest', str(manifest)]) == 0
+            explicit = json.loads(output.getvalue())['command']
+            assert field(explicit, '--start-pool-manifest') == str(manifest)
+            assert field(explicit, '--start-pool-manifest-sha256') == launch.sha(manifest)
         results[method] = 'PASS'
     invalid = [
+        ['--method', 'B', '--seed', '1', '--steps', '1', '--output-dir', '/tmp/x', '--pool-manifest', '/does/not/exist'],
         [],
         ['--method', 'D', '--seed', '1', '--steps', '1', '--output-dir', '/tmp/x'],
         ['--method', 'A', '--seed', '-1', '--steps', '1', '--output-dir', '/tmp/x'],
         ['--method', 'A', '--seed', '1', '--steps', '0', '--output-dir', '/tmp/x'],
-        ['--method', 'A', '--seed', '1', '--steps', '1', '--output-dir', '/tmp/x', '--pool-manifest', str(launch.DEFAULT_MANIFEST)],
+        ['--method', 'A', '--seed', '1', '--steps', '1', '--output-dir', '/tmp/x', '--pool-manifest', str(launch.PROJECT / 'runs/archive_readiness_20261112/donor_pools/train_manifest.txt')],
         ['--method', 'C', '--seed', '1', '--steps', '1', '--output-dir', str(launch.HERE)],
         ['--method', 'C', '--seed', '1', '--steps', '1', '--output-dir', '/tmp/x', '--resume-full', '/does/not/exist'],
         ['--method', 'A', '--seed', '1', '--steps', '1', '--output-dir', '/tmp/x', '--checkpoint-interval', '0'],

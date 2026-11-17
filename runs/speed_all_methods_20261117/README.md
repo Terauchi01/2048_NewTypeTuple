@@ -1,6 +1,6 @@
 # 15 worker 学習ランチャー（32bit、研究用）
 
-`launch.py` は、既存の保存可能なTTAS版NT9のsourceとbinaryを読み取り、SHA-256を照合してから、方式別のコマンドを作ります。W・TCのE/Aおよびその演算はfloat32です。既定では **dry-run** で、実際に学習するには `--run` を指定します。ユーザーが指定した既存の出力先やcheckpointは上書きしません。
+`launch.py` は、外部データ省略に対応した `runs/online_archive_optional_20261117` のTTAS版NT9のsourceとbinaryを読み取り、SHA-256を照合してから、方式別のコマンドを作ります。W・TCのE/Aおよびその演算はfloat32です。既定では **dry-run** で、実際に学習するには `--run` を指定します。ユーザーが指定した既存の出力先やcheckpointは上書きしません。
 
 | 方式 | 行動 | archive |
 |---|---|---|
@@ -20,7 +20,7 @@
 python3 runs/speed_all_methods_20261117/launch.py --method C --seed 8 --steps 100000000 --output-dir /tmp/nt9_c_seed8
 ```
 
-出力されるコマンドを確認し、実行する場合に同じ引数に `--run` を付けてください。archiveありの方式は既存の学習用manifestを既定とします。別のmanifestを使う場合は `--pool-manifest PATH` で明示します。Aはmanifestを使いません。
+出力されるコマンドを確認し、実行する場合に同じ引数に `--run` を付けてください。archiveありの方式も、未指定なら外部データを読み込まず通常ゲームからオンライン取得を開始します。外部データを初期供給に使う場合だけ `--pool-manifest PATH` で明示します。Aはmanifestを使いません。
 
 保存済みfull checkpointからの再開は `--resume-full CHECKPOINT_DIR` を指定できます。元と同じ方式・seed・binary・source・checkpoint schedule・cache容量などが必要で、driverはidentity不一致を拒否します。このランチャーは既存の別binary checkpointを変換・偽装しません。cache容量を `--feature-cache-mib 32` に変更するとdriver identityも変わり、16 MiB設定のfull checkpointをそのまま再開できません。対象stepは既存driverの累積step指定です。
 
@@ -31,6 +31,8 @@ python3 runs/speed_all_methods_20261117/launch.py --method C --seed 8 --steps 10
 実行はi02〜i12の低負荷ホストに限定し、15 CPUの利用可能性と利用可能メモリ・出力ディスクを事前確認します。実行中はメモリ・ディスク・ホスト全体のswapoutを監視し、閾値に達した場合はこのrun専用のprocess groupを停止します。他ユーザーのjobへの資源予約や、ホスト全体のswapoutの発生源特定は行えません。非公平なTTAS lockは長期待機の可能性があり、学習品質・長期進捗の同等性は未証明です。
 
 各方式の速度・動作確認結果と制約は [方式別の結果](RESULTS.md) と [高速化実験記録](../SPEED_EXPERIMENTS_20261116.md) を参照してください。目標の平均60万steps/秒をこのランチャーが保証するわけではありません。
+
+新しいcheckoutでは、許可ホストで `bash runs/online_archive_optional_20261117/build.sh 9` を実行してbinaryを作成します。小規模回帰試験用は同じコマンドの末尾を `3` にし、`python3 runs/online_archive_optional_20261117/test_online_start.py` を実行します。旧releaseのcheckpointはsource/binary identityが異なるため、新releaseでは完全再開できません。
 
 設定と不正引数のテスト:
 
